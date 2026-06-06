@@ -44,7 +44,10 @@ const DEFAULT_HERO_BADGE = (
     <span className="text-muted-foreground">
       New version of Launch UI is out!
     </span>
-    <a href="https://www.launchuicomponents.com/" className="flex items-center gap-1">
+    <a
+      href="https://www.launchuicomponents.com/"
+      className="flex items-center gap-1"
+    >
       Get started
       <ArrowRightIcon className="size-3" />
     </a>
@@ -74,16 +77,22 @@ export default function Hero({
   return (
     <Section
       className={cn(
-        "fade-bottom overflow-hidden pb-0 sm:pb-0 md:pb-0",
+        "fade-bottom overflow-hidden pb-0 pt-0 sm:pb-0 sm:pt-0 md:pb-0 md:pt-0",
         className,
       )}
     >
-      <div className="max-w-container mx-auto flex flex-col gap-12 pt-16 sm:gap-24">
-        <div className="flex flex-col items-center gap-6 text-center sm:gap-12">
+      <div className="max-w-container mx-auto flex flex-col gap-8 pt-2 sm:gap-16 sm:pt-4">
+        <div className="flex flex-col items-center gap-4 text-center sm:gap-8">
           {badge !== false && badge}
-          <h1 className="animate-appear from-foreground to-foreground dark:to-muted-foreground relative z-10 inline-block bg-linear-to-r bg-clip-text text-4xl leading-tight font-semibold text-balance text-transparent drop-shadow-2xl sm:text-6xl sm:leading-tight md:text-8xl md:leading-tight">
-            {title}
-          </h1>
+          <div className="relative flex w-full justify-center">
+            <Glow
+              variant="top"
+              className="animate-appear-zoom opacity-0 delay-1000"
+            />
+            <h1 className="animate-appear from-foreground to-foreground dark:to-muted-foreground relative z-10 inline-block max-w-6xl bg-linear-to-r bg-clip-text text-4xl leading-tight font-semibold text-balance text-transparent drop-shadow-2xl sm:text-6xl sm:leading-tight md:text-8xl md:leading-tight xl:max-w-[1200px]">
+              {title}
+            </h1>
+          </div>
           <p className="text-md animate-appear text-muted-foreground relative z-10 max-w-[740px] font-medium text-balance opacity-0 delay-100 sm:text-xl">
             {description}
           </p>
@@ -106,7 +115,7 @@ export default function Hero({
             </div>
           ) : null}
           {mockup !== false && (
-            <div className="relative w-full pt-12">
+            <div className="relative w-full pt-4 sm:pt-6">
               <MockupFrame
                 className="animate-appear opacity-0 delay-700"
                 size="small"

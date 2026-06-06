@@ -24,6 +24,7 @@ import Glow from "@/components/ui/glow";
 import { Mockup, MockupFrame } from "@/components/ui/mockup";
 import { Progress } from "@/components/ui/progress";
 import { Section } from "@/components/ui/section";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { WarpBackground } from "@/components/ui/warp-background";
 import {
   getRepoAnalysis,
@@ -187,9 +188,12 @@ const bentoItems = [
 
 export function LandingPage() {
   return (
-    <main id="top" className="flex flex-col overflow-x-hidden">
+    <main id="top" className="relative flex flex-col overflow-x-hidden">
+      <div className="absolute top-4 right-6 z-40 sm:top-6">
+        <ThemeToggle />
+      </div>
       <Hero
-        className="pt-8"
+        className="pt-0"
         badge={
           <Badge variant="brand-secondary" className="animate-appear gap-1.5">
             <SparklesIcon className="size-3.5" />

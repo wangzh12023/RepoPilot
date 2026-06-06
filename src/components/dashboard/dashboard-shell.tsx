@@ -123,7 +123,10 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
   }
 
   return (
-    <SidebarProvider className="min-h-screen overflow-x-hidden">
+    <SidebarProvider
+      defaultOpen={false}
+      className="min-h-screen overflow-x-hidden"
+    >
       <RepoSidebar analysis={analysis} />
       <SidebarInset className="min-w-0 overflow-x-hidden">
         <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
@@ -182,7 +185,7 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-4">
-          <div className="flex flex-col gap-6 2xl:flex-row">
+          <div className="flex flex-col gap-6 xl:flex-row">
             <div className="min-w-0 flex-1">
               <Tabs
                 value={activeTab}
@@ -448,11 +451,11 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
             <Collapsible open={isDetailPanelOpen}>
               <aside
                 className={cn(
-                  "min-w-0 w-full shrink-0 2xl:transition-[width]",
-                  isDetailPanelOpen ? "2xl:w-[380px]" : "2xl:w-16",
+                  "min-w-0 w-full shrink-0 xl:sticky xl:top-[8.75rem] xl:max-h-[calc(100vh-10rem)] xl:transition-[width]",
+                  isDetailPanelOpen ? "xl:w-[360px]" : "xl:w-16",
                 )}
               >
-                <Card className="overflow-hidden">
+                <Card className="overflow-hidden xl:max-h-[calc(100vh-10rem)]">
                   <CardHeader
                     className={cn(
                       "border-b",
@@ -501,7 +504,7 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
                     </div>
                   </CardHeader>
 
-                  <CollapsibleContent>
+                  <CollapsibleContent className="xl:max-h-[calc(100vh-14rem)] xl:overflow-y-auto">
                     <CardContent className="grid gap-6 p-4">
                       <DetailPanelCard context={selectedContext} />
                       <RepoChatPanel
