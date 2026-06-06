@@ -6,6 +6,7 @@ import { BotIcon, MessageSquareQuoteIcon } from "lucide-react";
 import { Thread } from "@/components/assistant-ui/thread";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   generateAssistantResponse,
   type RepoAnalysis,
@@ -13,9 +14,10 @@ import {
 
 type RepoChatPanelProps = {
   analysis: RepoAnalysis;
+  className?: string;
 };
 
-export function RepoChatPanel({ analysis }: RepoChatPanelProps) {
+export function RepoChatPanel({ analysis, className }: RepoChatPanelProps) {
   const runtime = useLocalRuntime(
     {
       async run({ messages }) {
@@ -58,7 +60,7 @@ export function RepoChatPanel({ analysis }: RepoChatPanelProps) {
   );
 
   return (
-    <Card className="h-full min-h-[720px]">
+    <Card className={cn("flex min-h-[560px] min-w-0 flex-col overflow-hidden", className)}>
       <CardHeader className="gap-4 border-b">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -78,7 +80,7 @@ export function RepoChatPanel({ analysis }: RepoChatPanelProps) {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="h-[calc(100%-104px)] p-0">
+      <CardContent className="min-h-0 flex-1 p-0">
         <AssistantRuntimeProvider runtime={runtime}>
           <Thread />
         </AssistantRuntimeProvider>

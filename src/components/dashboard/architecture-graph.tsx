@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -31,8 +31,11 @@ type RepoFlowNode = Node<GraphNodeData, "module">;
 type RepoFlowEdge = Edge;
 
 type ArchitectureGraphProps = {
+  title: string;
+  description: string;
   nodes: GraphNode[];
   edges: GraphEdge[];
+  onSelectNode?: (node: GraphNodeData) => void;
 };
 
 function ModuleNode({ data }: NodeProps<RepoFlowNode>) {
@@ -78,8 +81,11 @@ const nodeTypes = {
 };
 
 export function ArchitectureGraph({
+  title,
+  description,
   nodes,
   edges,
+  onSelectNode,
 }: ArchitectureGraphProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(nodes[0]?.id ?? null);
   const initialNodes = nodes.map((node) => ({
@@ -103,83 +109,62 @@ export function ArchitectureGraph({
   const selectedNode =
     flowNodes.find((node) => node.id === selectedNodeId)?.data ?? flowNodes[0]?.data;
 
-  return (
-    <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="h-[520px] w-full">
-            <ReactFlow
-              nodes={flowNodes}
-              edges={flowEdges}
-              nodeTypes={nodeTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              fitView
-              proOptions={{ hideAttribution: true }}
-              defaultEdgeOptions={{
-                style: {
-                  stroke: "var(--color-border)",
-                },
-              }}
-              onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-            >
-              <Background
-                id="repo-grid"
-                gap={20}
-                size={1}
-                variant={BackgroundVariant.Dots}
-              />
-              <Controls showInteractive={false} />
-              <MiniMap
-                pannable
-                zoomable
-                className="!border !border-border !bg-background"
-                nodeStrokeWidth={3}
-              />
-            </ReactFlow>
-          </div>
-        </CardContent>
-      </Card>
+  useEffect(() => {
+    if (selectedNode) {
+      onSelectNode?.(selectedNode);
+    }
+  }, [onSelectNode, selectedNode]);
 
-      <Card>
-        <CardHeader className="gap-2">
-          <Badge variant="brand-secondary">Selected module</Badge>
-          <CardTitle>{selectedNode?.title}</CardTitle>
-          <CardDescription className="font-mono text-xs">
-            {selectedNode?.path}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{selectedNode?.summary}</p>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={selectedNode?.importance === "Core" ? "default" : "secondary"}>
-              {selectedNode?.importance}
-            </Badge>
-            <Badge variant="outline">{selectedNode?.language}</Badge>
-            <Badge variant="outline">{selectedNode?.framework}</Badge>
-            <Badge variant="outline">{selectedNode?.coverage} tests</Badge>
+  return (
+    <Card className="min-w-0 overflow-hidden">
+      <CardHeader className="gap-3 border-b">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <CardTitle>{title}</CardTitle>
+            <CardDescription className="max-w-full break-words leading-relaxed">
+              {description}
+            </CardDescription>
           </div>
-          <div className="grid gap-3">
-            {flowNodes.slice(0, 4).map((node) => (
-              <button
-                key={node.id}
-                type="button"
-                onClick={() => setSelectedNodeId(node.id)}
-                className={`rounded-xl border p-3 text-left transition-colors ${
-                  selectedNodeId === node.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-background hover:bg-muted/50"
-                }`}
+          <Badge variant="outline">{flowNodes.length} nodes</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <div className="min-w-[880px]">
+            <div className="h-[560px] w-full">
+              <ReactFlow
+                nodes={flowNodes}
+                edges={flowEdges}
+                nodeTypes={nodeTypes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                fitView
+                proOptions={{ hideAttribution: true }}
+                defaultEdgeOptions={{
+                  style: {
+                    stroke: "var(--color-border)",
+                  },
+                }}
+                onNodeClick={(_, node) => setSelectedNodeId(node.id)}
               >
-                <p className="text-sm font-medium">{node.data.title}</p>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  {node.data.path}
-                </p>
-              </button>
-            ))}
+                <Background
+                  id="repo-grid"
+                  gap={20}
+                  size={1}
+                  variant={BackgroundVariant.Dots}
+                />
+                <Controls showInteractive={false} />
+                <MiniMap
+                  pannable
+                  zoomable
+                  className="!border !border-border !bg-background"
+                  nodeStrokeWidth={3}
+                />
+              </ReactFlow>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
