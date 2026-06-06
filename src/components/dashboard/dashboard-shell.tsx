@@ -92,7 +92,7 @@ function DashboardWorkspace({
   return (
     <SidebarProvider>
       <RepoSidebar analysis={analysis} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
           <div className="flex flex-col gap-4 px-4 py-4 xl:flex-row xl:items-center">
             <div className="flex items-center gap-3">
@@ -139,31 +139,40 @@ function DashboardWorkspace({
           </div>
         </header>
 
-        <div className="grid flex-1 gap-6 p-4 xl:grid-cols-[1.25fr_0.75fr]">
-          <div className="space-y-6">
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {analysis.metrics.map((metric) => (
-                <Card key={metric.label}>
-                  <CardHeader className="gap-1 pb-2">
-                    <CardDescription>{metric.label}</CardDescription>
-                    <CardTitle className="text-2xl">{metric.value}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 text-sm text-muted-foreground">
-                    {metric.detail}
-                  </CardContent>
-                </Card>
-              ))}
-            </section>
+        <div className="flex flex-1 flex-col gap-6 p-4">
+          <Tabs defaultValue="overview" className="min-w-0 space-y-6">
+            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0">
+              <TabsTrigger value="overview" className="flex-none">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="architecture" className="flex-none">
+                Architecture
+              </TabsTrigger>
+              <TabsTrigger value="learning" className="flex-none">
+                Learning path
+              </TabsTrigger>
+              <TabsTrigger value="issues" className="flex-none">
+                Contribution tasks
+              </TabsTrigger>
+            </TabsList>
 
-            <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="flex h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="architecture">Architecture</TabsTrigger>
-                <TabsTrigger value="learning">Learning path</TabsTrigger>
-                <TabsTrigger value="issues">Contribution tasks</TabsTrigger>
-              </TabsList>
+            <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+              <div className="min-w-0 space-y-6">
+                <TabsContent value="overview" className="mt-0 space-y-6">
+                  <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    {analysis.metrics.map((metric) => (
+                      <Card key={metric.label}>
+                        <CardHeader className="gap-1 pb-2">
+                          <CardDescription>{metric.label}</CardDescription>
+                          <CardTitle className="text-2xl">{metric.value}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0 text-sm text-muted-foreground">
+                          {metric.detail}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </section>
 
-              <TabsContent value="overview" className="space-y-6">
                 <Card>
                   <CardHeader className="gap-3">
                     <div className="flex items-center gap-2">
@@ -251,46 +260,47 @@ function DashboardWorkspace({
                     ))}
                   </CardContent>
                 </Card>
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="architecture" className="space-y-6">
-                <Tabs defaultValue="system-map" className="space-y-4">
-                  <TabsList className="w-fit">
-                    <TabsTrigger value="system-map">Repository architecture</TabsTrigger>
-                    <TabsTrigger value="code-map">Code map</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="system-map">
-                    <ArchitectureGraph
-                      nodes={analysis.architectureGraph.nodes}
-                      edges={analysis.architectureGraph.edges}
-                    />
-                  </TabsContent>
-                  <TabsContent value="code-map">
-                    <ArchitectureGraph
-                      nodes={analysis.codeMapGraph.nodes}
-                      edges={analysis.codeMapGraph.edges}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </TabsContent>
+                <TabsContent value="architecture" className="mt-0 space-y-6">
+                  <Tabs defaultValue="system-map" className="space-y-4">
+                    <TabsList className="w-fit">
+                      <TabsTrigger value="system-map">Repository architecture</TabsTrigger>
+                      <TabsTrigger value="code-map">Code map</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="system-map" className="mt-0">
+                      <ArchitectureGraph
+                        nodes={analysis.architectureGraph.nodes}
+                        edges={analysis.architectureGraph.edges}
+                      />
+                    </TabsContent>
+                    <TabsContent value="code-map" className="mt-0">
+                      <ArchitectureGraph
+                        nodes={analysis.codeMapGraph.nodes}
+                        edges={analysis.codeMapGraph.edges}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
 
-              <TabsContent value="learning">
-                <LearningPath analysis={analysis} />
-              </TabsContent>
+                <TabsContent value="learning" className="mt-0">
+                  <LearningPath analysis={analysis} />
+                </TabsContent>
 
-              <TabsContent value="issues" className="space-y-6">
-                <div className="grid gap-4 lg:grid-cols-2">
-                  {analysis.issues.map((issue) => (
-                    <IssueCard key={issue.id} issue={issue} />
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
+                <TabsContent value="issues" className="mt-0 space-y-6">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {analysis.issues.map((issue) => (
+                      <IssueCard key={issue.id} issue={issue} />
+                    ))}
+                  </div>
+                </TabsContent>
+              </div>
 
-          <div className="min-h-[720px]">
-            <RepoChatPanel analysis={analysis} />
-          </div>
+              <div className="min-w-0 min-h-[720px]">
+                <RepoChatPanel analysis={analysis} />
+              </div>
+            </div>
+          </Tabs>
         </div>
       </SidebarInset>
     </SidebarProvider>
