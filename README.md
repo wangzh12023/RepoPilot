@@ -67,24 +67,24 @@ If your GitHub client does not render the embedded player, open the asset direct
 ## 🖼️ Product Preview
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/wangzh12023/RepoPilot/main/public/readme-assets/landing.png" width="100%" alt="RepoPilot landing page" />
+  <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/landing.png" width="100%" alt="RepoPilot landing page" />
 </p>
 
 <table>
   <tr>
     <td width="50%">
-      <img src="https://raw.githubusercontent.com/wangzh12023/RepoPilot/main/public/readme-assets/dashboard-overview.png" alt="RepoPilot dashboard overview" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/dashboard-overview.png" alt="RepoPilot dashboard overview" />
     </td>
     <td width="50%">
-      <img src="https://raw.githubusercontent.com/wangzh12023/RepoPilot/main/public/readme-assets/architecture.png" alt="RepoPilot architecture section" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/architecture.png" alt="RepoPilot architecture section" />
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://raw.githubusercontent.com/wangzh12023/RepoPilot/main/public/readme-assets/chat.png" alt="RepoPilot grounded chat panel" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/chat.png" alt="RepoPilot grounded chat panel" />
     </td>
     <td width="50%">
-      <img src="https://raw.githubusercontent.com/wangzh12023/RepoPilot/main/public/readme-assets/sidebar.png" alt="RepoPilot sidebar and contribution tasks" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/sidebar.png" alt="RepoPilot sidebar and contribution tasks" />
     </td>
   </tr>
 </table>
