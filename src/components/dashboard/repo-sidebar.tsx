@@ -88,10 +88,27 @@ export function RepoSidebar({ analysis }: RepoSidebarProps) {
             <SidebarMenu>
               {analysis.modules.slice(0, 4).map((module) => (
                 <SidebarMenuItem key={module.id}>
-                  <SidebarMenuButton tooltip={module.path}>
-                    <span>{module.title}</span>
+                  <SidebarMenuButton
+                    tooltip={module.path}
+                    className="h-auto items-start p-0 hover:bg-transparent"
+                  >
+                    <div className="w-full rounded-md p-2 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="min-w-0 break-words text-sm font-medium leading-snug">
+                          {module.title}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="max-w-[7.5rem] shrink-0 whitespace-normal text-right text-[10px] leading-tight"
+                        >
+                          {module.coverage}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
+                        {module.path}
+                      </p>
+                    </div>
                   </SidebarMenuButton>
-                  <SidebarMenuBadge>{module.coverage}</SidebarMenuBadge>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
