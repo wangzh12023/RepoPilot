@@ -38,16 +38,17 @@ const bentoItems = [
       "Translate directory structure, dependencies, and ownership into a guided visual graph.",
     href: "#product-demo",
     cta: "See the map",
-    className: "lg:col-span-2 lg:row-span-2",
+    className: "xl:col-span-2 xl:min-h-[25rem]",
+    previewClassName: "min-h-[17rem]",
     background: (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="grid gap-3 p-6">
-          {demoAnalysis.modules.slice(0, 3).map((module) => (
+          {demoAnalysis.modules.slice(0, 2).map((module) => (
             <Card key={module.id} className="bg-background/90 shadow-sm">
               <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div className="space-y-1">
+                <div className="min-w-0 space-y-1">
                   <p className="text-sm font-medium">{module.title}</p>
-                  <p className="text-xs text-muted-foreground">{module.path}</p>
+                  <p className="break-words text-xs text-muted-foreground">{module.path}</p>
                 </div>
                 <Badge variant={module.importance === "Core" ? "default" : "secondary"}>
                   {module.importance}
@@ -66,16 +67,16 @@ const bentoItems = [
       "Answer questions with direct references to files, modules, tests, and issue threads.",
     href: "#product-demo",
     cta: "Preview chat",
-    className: "lg:col-span-1 lg:row-span-1",
+    className: "",
     background: (
       <div className="pointer-events-none absolute inset-0 p-5">
         <Card className="h-full bg-background/90 shadow-sm">
           <CardHeader className="gap-2">
             <Badge variant="brand-secondary">Grounded reply</Badge>
-            <CardTitle className="text-sm">
+            <CardTitle className="break-words text-sm leading-snug">
               Which file owns repository ingestion?
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="break-words text-xs leading-relaxed">
               `app/api/repo/analyze/route.ts` starts the scan, then hands off to `lib/github/fetch-repo-context.ts`.
             </CardDescription>
           </CardHeader>
@@ -90,14 +91,14 @@ const bentoItems = [
       "Surface contribution tasks with difficulty, relevant files, and the safest first step.",
     href: "#cta",
     cta: "Browse tasks",
-    className: "lg:col-span-1 lg:row-span-1",
+    className: "",
     background: (
       <div className="pointer-events-none absolute inset-0 grid gap-3 p-5">
         {demoAnalysis.issues.slice(0, 2).map((issue) => (
           <Card key={issue.id} className="bg-background/90 shadow-sm">
             <CardContent className="space-y-2 p-4">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">
+                <p className="min-w-0 break-words text-sm font-medium leading-snug">
                   {issue.id} {issue.title}
                 </p>
                 <Badge
@@ -120,17 +121,17 @@ const bentoItems = [
       "Keep README, docs, and test coverage visible while developers learn how the repo actually behaves.",
     href: "#signals",
     cta: "See signals",
-    className: "lg:col-span-1 lg:row-span-1",
+    className: "",
     background: (
       <div className="pointer-events-none absolute inset-0 p-5">
         <Card className="bg-background/90 shadow-sm">
           <CardContent className="space-y-4 p-4">
             {demoAnalysis.metrics.slice(2).map((metric, index) => (
               <div key={metric.label} className="space-y-2">
-                <div className="flex items-center justify-between gap-3 text-xs">
-                  <span>{metric.label}</span>
-                  <span className="text-muted-foreground">{metric.value}</span>
-                </div>
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span>{metric.label}</span>
+                <span className="text-muted-foreground">{metric.value}</span>
+              </div>
                 <Progress value={index === 0 ? 82 : 64} />
               </div>
             ))}
@@ -146,7 +147,7 @@ const bentoItems = [
       "Turn large repositories into an ordered onboarding sequence instead of a flat file tree.",
     href: "#product-demo",
     cta: "See the path",
-    className: "lg:col-span-1 lg:row-span-1",
+    className: "",
     background: (
       <div className="pointer-events-none absolute inset-0 p-5">
         <Card className="h-full bg-background/90 shadow-sm">
@@ -155,7 +156,7 @@ const bentoItems = [
               <div key={step.id} className="flex items-start gap-3">
                 <Badge variant="outline">{index + 1}</Badge>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">{step.title}</p>
+                  <p className="break-words text-sm font-medium leading-snug">{step.title}</p>
                   <p className="text-xs text-muted-foreground">{step.duration}</p>
                 </div>
               </div>
@@ -184,8 +185,8 @@ export function LandingPage() {
         mockup={<DashboardPreview analysis={demoAnalysis} compact />}
       />
 
-      <Section className="pt-8">
-        <div className="max-w-container mx-auto space-y-10">
+      <Section className="px-6 py-24">
+        <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl space-y-4 text-center">
             <Badge variant="outline">Feature grid</Badge>
             <h2 className="text-3xl font-semibold sm:text-5xl">
@@ -195,7 +196,7 @@ export function LandingPage() {
               Each view is assembled from repository evidence, so onboarding stays grounded in the files and issues that actually matter.
             </p>
           </div>
-          <BentoGrid className="auto-rows-[19rem] lg:grid-rows-3">
+          <BentoGrid className="mt-16 items-stretch">
             {bentoItems.map((item) => (
               <BentoCard key={item.name} {...item} />
             ))}

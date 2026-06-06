@@ -90,73 +90,79 @@ function DashboardWorkspace({
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="min-h-screen overflow-x-hidden">
       <RepoSidebar analysis={analysis} />
-      <SidebarInset className="min-w-0">
+      <SidebarInset className="min-w-0 overflow-x-hidden">
         <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
-          <div className="flex flex-col gap-4 px-4 py-4 xl:flex-row xl:items-center">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger />
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Repository workspace</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl font-semibold">{analysis.slug}</h1>
-                  <Badge variant="brand-secondary">{analysis.branch}</Badge>
+          <div className="grid gap-4 px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <SidebarTrigger />
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm text-muted-foreground">Repository workspace</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="break-words text-xl font-semibold">{analysis.slug}</h1>
+                    <Badge variant="brand-secondary">{analysis.branch}</Badge>
+                  </div>
                 </div>
               </div>
+
+              <Dialog>
+                <DialogTrigger render={<Button variant="outline" />}>
+                  What was analyzed?
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Repository analysis scope</DialogTitle>
+                    <DialogDescription>
+                      This demo workspace grounds every card and chat response in the same repository evidence bundle.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid max-h-[52vh] gap-3 overflow-y-auto pr-1">
+                    {analysis.analysisSources.map((source) => (
+                      <Card key={source.label} className="bg-muted/30">
+                        <CardContent className="space-y-2 p-4">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{source.label}</Badge>
+                          </div>
+                          <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
+                            {source.detail}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <DialogFooter showCloseButton />
+                </DialogContent>
+              </Dialog>
             </div>
 
-            <div className="hidden flex-1 xl:block">
+            <div className="w-full">
               <RepoUrlForm mode="compact" defaultValue={analysis.repoUrl} />
             </div>
-
-            <Dialog>
-              <DialogTrigger render={<Button variant="outline" />}>
-                What was analyzed?
-              </DialogTrigger>
-              <DialogContent className="max-w-xl">
-                <DialogHeader>
-                  <DialogTitle>Repository analysis scope</DialogTitle>
-                  <DialogDescription>
-                    This demo workspace grounds every card and chat response in the same repository evidence bundle.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-3">
-                  {analysis.analysisSources.map((source) => (
-                    <Card key={source.label} className="bg-muted/30">
-                      <CardContent className="space-y-1 p-4">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{source.label}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{source.detail}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                <DialogFooter showCloseButton />
-              </DialogContent>
-            </Dialog>
           </div>
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-4">
-          <Tabs defaultValue="overview" className="min-w-0 space-y-6">
-            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0">
-              <TabsTrigger value="overview" className="flex-none">
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="architecture" className="flex-none">
-                Architecture
-              </TabsTrigger>
-              <TabsTrigger value="learning" className="flex-none">
-                Learning path
-              </TabsTrigger>
-              <TabsTrigger value="issues" className="flex-none">
-                Contribution tasks
-              </TabsTrigger>
-            </TabsList>
+          <Tabs defaultValue="overview" className="min-w-0 gap-6">
+            <div className="overflow-x-auto">
+              <TabsList className="flex h-auto w-max min-w-full flex-wrap justify-start gap-2 bg-transparent p-0 md:min-w-0">
+                <TabsTrigger value="overview" className="flex-none">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="architecture" className="flex-none">
+                  Architecture
+                </TabsTrigger>
+                <TabsTrigger value="learning" className="flex-none">
+                  Learning path
+                </TabsTrigger>
+                <TabsTrigger value="issues" className="flex-none">
+                  Contribution tasks
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+            <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
               <div className="min-w-0 space-y-6">
                 <TabsContent value="overview" className="mt-0 space-y-6">
                   <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -173,93 +179,97 @@ function DashboardWorkspace({
                     ))}
                   </section>
 
-                <Card>
-                  <CardHeader className="gap-3">
-                    <div className="flex items-center gap-2">
-                      <SparklesIcon className="size-4 text-muted-foreground" />
-                      <CardTitle>Project overview</CardTitle>
-                    </div>
-                    <CardDescription>
-                      {analysis.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-                    <div className="space-y-4">
-                      <p className="text-sm font-medium">Key modules</p>
-                      <div className="grid gap-3">
-                        {analysis.modules.slice(0, 4).map((module) => (
-                          <Card key={module.id} className="bg-muted/30">
-                            <CardContent className="space-y-3 p-4">
-                              <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div className="space-y-1">
-                                  <p className="text-sm font-medium">{module.title}</p>
-                                  <p className="font-mono text-xs text-muted-foreground">
-                                    {module.path}
-                                  </p>
+                  <Card>
+                    <CardHeader className="gap-3">
+                      <div className="flex items-center gap-2">
+                        <SparklesIcon className="size-4 text-muted-foreground" />
+                        <CardTitle>Project overview</CardTitle>
+                      </div>
+                      <CardDescription className="max-w-full break-words leading-relaxed">
+                        {analysis.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                      <div className="space-y-4">
+                        <p className="text-sm font-medium">Key modules</p>
+                        <div className="grid gap-3">
+                          {analysis.modules.slice(0, 4).map((module) => (
+                            <Card key={module.id} className="bg-muted/30">
+                              <CardContent className="space-y-3 p-4">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div className="min-w-0 space-y-1">
+                                    <p className="text-sm font-medium">{module.title}</p>
+                                    <p className="max-w-full break-words font-mono text-xs text-muted-foreground">
+                                      {module.path}
+                                    </p>
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      module.importance === "Core"
+                                        ? "default"
+                                        : module.importance === "High"
+                                          ? "secondary"
+                                          : "outline"
+                                    }
+                                  >
+                                    {module.importance}
+                                  </Badge>
                                 </div>
-                                <Badge
-                                  variant={
-                                    module.importance === "Core"
-                                      ? "default"
-                                      : module.importance === "High"
-                                        ? "secondary"
-                                        : "outline"
-                                  }
-                                >
-                                  {module.importance}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {module.summary}
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                <Badge variant="outline">{module.language}</Badge>
-                                <Badge variant="outline">{module.framework}</Badge>
-                                <Badge variant="outline">{module.coverage} coverage</Badge>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                                <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
+                                  {module.summary}
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  <Badge variant="outline">{module.language}</Badge>
+                                  <Badge variant="outline">{module.framework}</Badge>
+                                  <Badge variant="outline">{module.coverage} coverage</Badge>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-4">
-                      <p className="text-sm font-medium">Code conventions</p>
-                      <div className="grid gap-3">
-                        {analysis.conventions.map((convention) => (
-                          <Card key={convention} className="bg-muted/30">
-                            <CardContent className="flex items-start gap-3 p-4 text-sm text-muted-foreground">
-                              <BookOpenTextIcon className="mt-0.5 size-4 shrink-0" />
-                              {convention}
-                            </CardContent>
-                          </Card>
-                        ))}
+                      <div className="space-y-4">
+                        <p className="text-sm font-medium">Code conventions</p>
+                        <div className="grid gap-3">
+                          {analysis.conventions.map((convention) => (
+                            <Card key={convention} className="bg-muted/30">
+                              <CardContent className="flex items-start gap-3 p-4 text-sm text-muted-foreground">
+                                <BookOpenTextIcon className="mt-0.5 size-4 shrink-0" />
+                                <span className="max-w-full break-words leading-relaxed">
+                                  {convention}
+                                </span>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                <Card>
-                  <CardHeader className="gap-3">
-                    <div className="flex items-center gap-2">
-                      <ActivityIcon className="size-4 text-muted-foreground" />
-                      <CardTitle>Development workflow</CardTitle>
-                    </div>
-                    <CardDescription>
-                      The product flow stays visible from intake to grounded agent response.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    {analysis.workflow.map((step, index) => (
-                      <Card key={step} className="bg-muted/30">
-                        <CardContent className="space-y-3 p-4">
-                          <Badge variant="outline">Step {index + 1}</Badge>
-                          <p className="text-sm text-muted-foreground">{step}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </CardContent>
-                </Card>
+                  <Card>
+                    <CardHeader className="gap-3">
+                      <div className="flex items-center gap-2">
+                        <ActivityIcon className="size-4 text-muted-foreground" />
+                        <CardTitle>Development workflow</CardTitle>
+                      </div>
+                      <CardDescription className="max-w-full break-words leading-relaxed">
+                        The product flow stays visible from intake to grounded agent response.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                      {analysis.workflow.map((step, index) => (
+                        <Card key={step} className="bg-muted/30">
+                          <CardContent className="space-y-3 p-4">
+                            <Badge variant="outline">Step {index + 1}</Badge>
+                            <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
+                              {step}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 <TabsContent value="architecture" className="mt-0 space-y-6">
