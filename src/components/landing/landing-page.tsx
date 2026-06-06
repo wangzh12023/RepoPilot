@@ -25,6 +25,7 @@ import { Mockup, MockupFrame } from "@/components/ui/mockup";
 import { Progress } from "@/components/ui/progress";
 import { Section } from "@/components/ui/section";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { TypewriterText } from "@/components/ui/typewriter-text";
 import { WarpBackground } from "@/components/ui/warp-background";
 import {
   getRepoAnalysis,
@@ -201,7 +202,13 @@ export function LandingPage() {
           </Badge>
         }
         title="RepoPilot"
-        description="Paste any GitHub repository and learn the architecture before you open the code. An AI workspace that scans README, directory tree, dependencies, tests, docs, and issues, then turns the repository into an architecture map, grounded agent chat, and contributor-ready learning path."
+        subtitle={
+          <TypewriterText
+            text="Paste any GitHub repository and learn the architecture before you open the code."
+            className="animate-appear from-foreground to-foreground dark:to-muted-foreground relative z-10 inline-block max-w-5xl bg-linear-to-r bg-clip-text px-4 text-xl leading-tight font-semibold text-balance text-transparent opacity-0 delay-100 sm:px-0 sm:text-2xl md:text-3xl"
+          />
+        }
+        description="An AI workspace that scans README, directory tree, dependencies, tests, docs, and issues, then turns the repository into an architecture map, grounded agent chat, and contributor-ready learning path."
         actions={<RepoUrlForm />}
         mockup={<DashboardPreview analysis={demoAnalysis} compact />}
       />

@@ -17,6 +17,7 @@ interface HeroButtonProps extends Omit<LinkButtonProps, "children"> {
 
 interface HeroProps {
   title?: string;
+  subtitle?: ReactNode | false;
   description?: string;
   mockup?: ReactNode | false;
   badge?: ReactNode | false;
@@ -67,6 +68,7 @@ const DEFAULT_HERO_MOCKUP = (
 
 export default function Hero({
   title = "Give your big idea the design it deserves",
+  subtitle,
   description = "Professionally designed blocks and templates built with React, Shadcn/ui and Tailwind that will help your product stand out.",
   mockup = DEFAULT_HERO_MOCKUP,
   badge = DEFAULT_HERO_BADGE,
@@ -95,6 +97,7 @@ export default function Hero({
               {title}
             </h1>
           </div>
+          {subtitle !== false && subtitle ? subtitle : null}
           <p className="text-md animate-appear text-muted-foreground relative z-10 max-w-[740px] font-medium text-balance opacity-0 delay-100 sm:text-xl">
             {description}
           </p>
