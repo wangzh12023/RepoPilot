@@ -88,6 +88,8 @@ export default function Hero({
             <Glow
               variant="top"
               className="animate-appear-zoom opacity-0 delay-1000"
+              primaryClassName="h-[192px] w-[52%] scale-[2.05] opacity-20 sm:h-[360px] dark:from-violet-400/60 dark:to-transparent"
+              secondaryClassName="h-[112px] w-[34%] scale-[1.55] opacity-20 sm:h-[208px] dark:from-fuchsia-400/35 dark:to-transparent"
             />
             <h1 className="animate-appear from-foreground to-foreground dark:to-muted-foreground relative z-10 inline-block max-w-6xl bg-linear-to-r bg-clip-text text-4xl leading-tight font-semibold text-balance text-transparent drop-shadow-2xl sm:text-6xl sm:leading-tight md:text-8xl md:leading-tight xl:max-w-[1200px]">
               {title}

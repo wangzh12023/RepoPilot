@@ -20,9 +20,15 @@ const glowVariants = cva("absolute w-full", {
 
 function Glow({
   className,
+  primaryClassName,
+  secondaryClassName,
   variant,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof glowVariants>) {
+}: React.ComponentProps<"div"> &
+  VariantProps<typeof glowVariants> & {
+    primaryClassName?: string;
+    secondaryClassName?: string;
+  }) {
   return (
     <div
       data-slot="glow"
@@ -33,12 +39,14 @@ function Glow({
         className={cn(
           "from-brand-foreground/50 to-brand-foreground/0 absolute left-1/2 h-[256px] w-[60%] -translate-x-1/2 scale-[2.5] rounded-[50%] bg-radial from-10% to-60% opacity-20 sm:h-[512px] dark:opacity-100",
           variant === "center" && "-translate-y-1/2",
+          primaryClassName,
         )}
       />
       <div
         className={cn(
           "from-brand/30 to-brand-foreground/0 absolute left-1/2 h-[128px] w-[40%] -translate-x-1/2 scale-200 rounded-[50%] bg-radial from-10% to-60% opacity-20 sm:h-[256px] dark:opacity-100",
           variant === "center" && "-translate-y-1/2",
+          secondaryClassName,
         )}
       />
     </div>
