@@ -9,7 +9,14 @@ import {
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
-import { type FC, memo, useState } from "react";
+import {
+  Children,
+  type FC,
+  isValidElement,
+  memo,
+  type ReactNode,
+  useState,
+} from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
@@ -126,15 +133,25 @@ const defaultComponents = memoizeMarkdownComponents({
       {...props}
     />
   ),
-  p: ({ className, ...props }) => (
-    <p
-      className={cn(
-        "aui-md-p my-2.5 leading-normal first:mt-0 last:mb-0",
-        className,
-      )}
-      {...props}
-    />
-  ),
+  p: ({ className, children, ...props }) => {
+    const embeddedAssetUrl = getStandaloneGitHubAttachmentUrl(children);
+
+    if (embeddedAssetUrl) {
+      return <GitHubAttachmentVideo url={embeddedAssetUrl} />;
+    }
+
+    return (
+      <p
+        className={cn(
+          "aui-md-p my-2.5 leading-normal first:mt-0 last:mb-0",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </p>
+    );
+  },
   a: ({ className, ...props }) => (
     <a
       className={cn(
@@ -248,3 +265,61 @@ const defaultComponents = memoizeMarkdownComponents({
   },
   CodeHeader,
 });
+
+function GitHubAttachmentVideo({ url }: { url: string }) {
+  return (
+    <div className="aui-md-video my-3 w-full overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+      <video
+        src={url}
+        className="aspect-video w-full bg-black"
+        autoPlay
+        muted
+        loop
+        playsInline
+        controls
+        preload="metadata"
+      />
+      <div className="border-t border-border/50 px-3 py-2">
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary text-xs underline underline-offset-2 hover:text-primary/80"
+        >
+          Open video in a new tab
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function getStandaloneGitHubAttachmentUrl(children: ReactNode) {
+  const normalizedChildren = Children.toArray(children).filter((child) => {
+    return !(typeof child === "string" && child.trim().length === 0);
+  });
+
+  if (normalizedChildren.length !== 1) {
+    return null;
+  }
+
+  const child = normalizedChildren[0];
+
+  if (!isValidElement<{ href?: string }>(child) || child.type !== "a") {
+    return null;
+  }
+
+  const href =
+    typeof child.props.href === "string" ? child.props.href.trim() : null;
+
+  if (!href || !isGitHubAttachmentAssetUrl(href)) {
+    return null;
+  }
+
+  return href;
+}
+
+function isGitHubAttachmentAssetUrl(value: string) {
+  return /^https:\/\/github\.com\/user-attachments\/assets\/[a-z0-9-]+(?:\?[^\s]*)?$/i.test(
+    value,
+  );
+}
