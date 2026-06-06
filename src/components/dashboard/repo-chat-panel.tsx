@@ -6,43 +6,59 @@ import { BotIcon, MessageSquareQuoteIcon } from "lucide-react";
 import { Thread } from "@/components/assistant-ui/thread";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { sendRepoChat } from "@/lib/client/repo-api";
+import type { RepoChatMessage } from "@/lib/repo-analysis-runtime";
 import { cn } from "@/lib/utils";
-import {
-  generateAssistantResponse,
-  type RepoAnalysis,
-} from "@/lib/repo-analysis";
+import { type RepoAnalysis } from "@/lib/repo-analysis";
 
 type RepoChatPanelProps = {
   analysis: RepoAnalysis;
   className?: string;
 };
 
+function flattenMessageText(message: {
+  role: string;
+  content: ReadonlyArray<{ type: string; text?: string }>;
+}) {
+  return message.content
+    .filter((part) => part.type === "text" || part.type === "reasoning")
+    .map((part) => part.text ?? "")
+    .join("\n")
+    .trim();
+}
+
+function normalizeMessageRole(role: string): RepoChatMessage["role"] {
+  if (role === "assistant" || role === "system") {
+    return role;
+  }
+
+  return "user";
+}
+
 export function RepoChatPanel({ analysis, className }: RepoChatPanelProps) {
   const runtime = useLocalRuntime(
     {
       async run({ messages }) {
-        const latestUserText = [...messages]
-          .reverse()
-          .find((message) => message.role === "user")
-          ?.content.filter((part) => part.type === "text")
-          .map((part) => part.text)
-          .join(" ");
-
-        const answer = generateAssistantResponse(latestUserText ?? "", analysis);
-
-        await new Promise((resolve) => setTimeout(resolve, 450));
+        const chatResponse = await sendRepoChat({
+          repoUrl: analysis.repoUrl,
+          analysis,
+          messages: messages
+            .map((message) => ({
+              role: normalizeMessageRole(message.role),
+              content: flattenMessageText(message),
+            }))
+            .filter((message) => message.content),
+        });
 
         return {
           content: [
             {
               type: "reasoning" as const,
-              text: `Grounding answer in ${analysis.analysisSources
-                .map((source) => source.label)
-                .join(", ")} for ${analysis.slug}.`,
+              text: chatResponse.reasoning,
             },
             {
               type: "text" as const,
-              text: answer,
+              text: chatResponse.answer,
             },
           ],
         };
@@ -70,7 +86,8 @@ export function RepoChatPanel({ analysis, className }: RepoChatPanelProps) {
             <div>
               <CardTitle className="text-base">Agent Chat</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Ask about architecture, workflow, tests, or the safest first contribution.
+                Ask about architecture, workflow, tests, or the safest first
+                contribution.
               </p>
             </div>
           </div>

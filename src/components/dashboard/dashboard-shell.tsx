@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ActivityIcon,
@@ -47,6 +47,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { fetchRepoAnalysis } from "@/lib/client/repo-api";
 import { cn } from "@/lib/utils";
 import {
   SAMPLE_REPO_URL,
@@ -57,6 +58,7 @@ import {
   type RepoIssue,
   type RepoModule,
 } from "@/lib/repo-analysis";
+import type { RepoDataSource } from "@/lib/repo-analysis-runtime";
 
 const ANALYSIS_STEPS = [
   "Reading README and contributor docs",
@@ -87,14 +89,89 @@ type DetailContext = {
 export function DashboardShell() {
   const searchParams = useSearchParams();
   const repoUrl = searchParams.get("repo") ?? SAMPLE_REPO_URL;
-  const analysis = getRepoAnalysis(repoUrl);
 
-  return <DashboardWorkspace key={analysis.repoUrl} analysis={analysis} />;
+  return <DashboardAnalysisLoader key={repoUrl} repoUrl={repoUrl} />;
 }
 
-function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
+function DashboardAnalysisLoader({ repoUrl }: { repoUrl: string }) {
+  const fallbackAnalysis = useMemo(() => getRepoAnalysis(repoUrl), [repoUrl]);
+  const [analysis, setAnalysis] = useState<RepoAnalysis>(fallbackAnalysis);
+  const [dataSource, setDataSource] = useState<RepoDataSource>("mock");
+  const [warning, setWarning] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const stepTimer = window.setInterval(() => {
+      setCurrentStep((value) => (value < ANALYSIS_STEPS.length ? value + 1 : value));
+    }, 350);
+
+    void fetchRepoAnalysis(repoUrl)
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+
+        setAnalysis(response.analysis);
+        setDataSource(response.source);
+        setWarning(response.warning ?? null);
+      })
+      .catch((error) => {
+        if (!isActive) {
+          return;
+        }
+
+        setAnalysis(fallbackAnalysis);
+        setDataSource("mock");
+        setWarning(
+          error instanceof Error
+            ? error.message
+            : "Falling back to mock analysis because the repository request failed.",
+        );
+      })
+      .finally(() => {
+        if (!isActive) {
+          return;
+        }
+
+        window.clearInterval(stepTimer);
+        setCurrentStep(ANALYSIS_STEPS.length);
+        setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+      window.clearInterval(stepTimer);
+    };
+  }, [fallbackAnalysis, repoUrl]);
+
+  if (isLoading) {
+    return (
+      <AnalysisLoadingView analysis={fallbackAnalysis} currentStep={currentStep} />
+    );
+  }
+
+  return (
+    <DashboardWorkspace
+      key={`${analysis.repoUrl}:${dataSource}`}
+      analysis={analysis}
+      dataSource={dataSource}
+      warning={warning}
+    />
+  );
+}
+
+function DashboardWorkspace({
+  analysis,
+  dataSource,
+  warning,
+}: {
+  analysis: RepoAnalysis;
+  dataSource: RepoDataSource;
+  warning: string | null;
+}) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const [architectureView, setArchitectureView] =
     useState<ArchitectureView>("system-map");
@@ -102,25 +179,6 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
   const [selectedContext, setSelectedContext] = useState<DetailContext>(() =>
     getDefaultContext("overview", "system-map", analysis),
   );
-
-  useEffect(() => {
-    const timers = ANALYSIS_STEPS.map((_, index) =>
-      window.setTimeout(() => setCurrentStep(index + 1), 350 * (index + 1)),
-    );
-
-    const readyTimer = window.setTimeout(() => setIsReady(true), 2250);
-
-    return () => {
-      timers.forEach((timer) => window.clearTimeout(timer));
-      window.clearTimeout(readyTimer);
-    };
-  }, []);
-
-  if (!isReady) {
-    return (
-      <AnalysisLoadingView analysis={analysis} currentStep={currentStep} />
-    );
-  }
 
   return (
     <SidebarProvider
@@ -143,6 +201,9 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
                       {analysis.slug}
                     </h1>
                     <Badge variant="brand-secondary">{analysis.branch}</Badge>
+                    <Badge variant="outline">
+                      {dataSource === "live" ? "Live analysis" : "Mock analysis"}
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -181,6 +242,9 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
             <div className="w-full">
               <RepoUrlForm mode="compact" defaultValue={analysis.repoUrl} />
             </div>
+            {warning ? (
+              <p className="text-sm text-muted-foreground">{warning}</p>
+            ) : null}
           </div>
         </header>
 
