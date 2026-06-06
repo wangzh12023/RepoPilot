@@ -204,8 +204,8 @@ export function LandingPage() {
         title="RepoPilot"
         subtitle={
           <TypewriterText
-            text="Paste any GitHub repository and learn the architecture before you open the code."
-            className="animate-appear from-foreground to-foreground dark:to-muted-foreground relative z-10 inline-block max-w-5xl bg-linear-to-r bg-clip-text px-4 text-xl leading-tight font-semibold text-balance text-transparent opacity-0 delay-100 sm:px-0 sm:text-2xl md:text-3xl"
+            text={"Paste any GitHub repository\nand learn the architecture before you open the code."}
+            className="animate-appear from-foreground to-foreground dark:to-muted-foreground relative z-10 inline-block max-w-5xl whitespace-pre-line bg-linear-to-r bg-clip-text px-4 text-xl leading-tight font-semibold text-transparent opacity-0 delay-100 sm:px-0 sm:text-2xl md:text-3xl"
           />
         }
         description="An AI workspace that scans README, directory tree, dependencies, tests, docs, and issues, then turns the repository into an architecture map, grounded agent chat, and contributor-ready learning path."
