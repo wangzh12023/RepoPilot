@@ -25,7 +25,11 @@ import { Mockup, MockupFrame } from "@/components/ui/mockup";
 import { Progress } from "@/components/ui/progress";
 import { Section } from "@/components/ui/section";
 import { WarpBackground } from "@/components/ui/warp-background";
-import { getRepoAnalysis, getSuggestedRepoTarget, SAMPLE_REPO_URL } from "@/lib/repo-analysis";
+import {
+  getRepoAnalysis,
+  getSuggestedRepoTarget,
+  SAMPLE_REPO_URL,
+} from "@/lib/repo-analysis";
 
 const demoAnalysis = getRepoAnalysis(SAMPLE_REPO_URL);
 const demoTarget = getSuggestedRepoTarget(SAMPLE_REPO_URL);
@@ -38,7 +42,7 @@ const bentoItems = [
       "Translate directory structure, dependencies, and ownership into a guided visual graph.",
     href: "#product-demo",
     cta: "See the map",
-    className: "xl:col-span-2 xl:min-h-[25rem]",
+    className: "lg:col-span-2 lg:min-h-[25rem]",
     previewClassName: "min-h-[17rem]",
     background: (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -48,9 +52,15 @@ const bentoItems = [
               <CardContent className="flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0 space-y-1">
                   <p className="text-sm font-medium">{module.title}</p>
-                  <p className="break-words text-xs text-muted-foreground">{module.path}</p>
+                  <p className="break-words text-xs text-muted-foreground">
+                    {module.path}
+                  </p>
                 </div>
-                <Badge variant={module.importance === "Core" ? "default" : "secondary"}>
+                <Badge
+                  variant={
+                    module.importance === "Core" ? "default" : "secondary"
+                  }
+                >
                   {module.importance}
                 </Badge>
               </CardContent>
@@ -77,7 +87,8 @@ const bentoItems = [
               Which file owns repository ingestion?
             </CardTitle>
             <CardDescription className="break-words text-xs leading-relaxed">
-              `app/api/repo/analyze/route.ts` starts the scan, then hands off to `lib/github/fetch-repo-context.ts`.
+              `app/api/repo/analyze/route.ts` starts the scan, then hands off to
+              `lib/github/fetch-repo-context.ts`.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -102,7 +113,9 @@ const bentoItems = [
                   {issue.id} {issue.title}
                 </p>
                 <Badge
-                  variant={issue.difficulty === "Starter" ? "default" : "secondary"}
+                  variant={
+                    issue.difficulty === "Starter" ? "default" : "secondary"
+                  }
                 >
                   {issue.difficulty}
                 </Badge>
@@ -128,10 +141,10 @@ const bentoItems = [
           <CardContent className="space-y-4 p-4">
             {demoAnalysis.metrics.slice(2).map((metric, index) => (
               <div key={metric.label} className="space-y-2">
-              <div className="flex items-center justify-between gap-3 text-xs">
-                <span>{metric.label}</span>
-                <span className="text-muted-foreground">{metric.value}</span>
-              </div>
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span>{metric.label}</span>
+                  <span className="text-muted-foreground">{metric.value}</span>
+                </div>
                 <Progress value={index === 0 ? 82 : 64} />
               </div>
             ))}
@@ -156,8 +169,12 @@ const bentoItems = [
               <div key={step.id} className="flex items-start gap-3">
                 <Badge variant="outline">{index + 1}</Badge>
                 <div className="space-y-1">
-                  <p className="break-words text-sm font-medium leading-snug">{step.title}</p>
-                  <p className="text-xs text-muted-foreground">{step.duration}</p>
+                  <p className="break-words text-sm font-medium leading-snug">
+                    {step.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {step.duration}
+                  </p>
                 </div>
               </div>
             ))}
@@ -170,7 +187,7 @@ const bentoItems = [
 
 export function LandingPage() {
   return (
-    <main id="top" className="flex flex-col">
+    <main id="top" className="flex flex-col overflow-x-hidden">
       <Hero
         className="pt-8"
         badge={
@@ -190,10 +207,12 @@ export function LandingPage() {
           <div className="mx-auto max-w-3xl space-y-4 text-center">
             <Badge variant="outline">Feature grid</Badge>
             <h2 className="text-3xl font-semibold sm:text-5xl">
-              Everything a new contributor needs, without spelunking through the repo.
+              Everything a new contributor needs, without spelunking through the
+              repo.
             </h2>
             <p className="text-muted-foreground text-lg">
-              Each view is assembled from repository evidence, so onboarding stays grounded in the files and issues that actually matter.
+              Each view is assembled from repository evidence, so onboarding
+              stays grounded in the files and issues that actually matter.
             </p>
           </div>
           <BentoGrid className="mt-16 items-stretch">
@@ -209,10 +228,13 @@ export function LandingPage() {
           <div className="space-y-5">
             <Badge variant="outline">Animated analysis backdrop</Badge>
             <h2 className="text-3xl font-semibold sm:text-5xl">
-              Watch every repository signal converge into one grounded workspace.
+              Watch every repository signal converge into one grounded
+              workspace.
             </h2>
             <p className="text-muted-foreground text-lg">
-              README summaries, dependency choices, tests, docs, and open issues all stay visible while the assistant builds the module graph and contribution hints.
+              README summaries, dependency choices, tests, docs, and open issues
+              all stay visible while the assistant builds the module graph and
+              contribution hints.
             </p>
             <div className="flex flex-wrap gap-2">
               {demoAnalysis.analysisSources.map((source) => (
@@ -254,7 +276,9 @@ export function LandingPage() {
               The dashboard turns repo sprawl into a single learning surface.
             </h2>
             <p className="text-muted-foreground text-lg">
-              Review the project overview, architecture graph, module importance, workflow, code conventions, and starter issues side by side with a grounded chat panel.
+              Review the project overview, architecture graph, module
+              importance, workflow, code conventions, and starter issues side by
+              side with a grounded chat panel.
             </p>
             <div className="grid gap-3">
               {demoAnalysis.workflow.slice(0, 3).map((item) => (
@@ -269,7 +293,10 @@ export function LandingPage() {
 
           <div className="relative">
             <MockupFrame size="large" className="relative z-10">
-              <Mockup type="responsive" className="w-full rounded-2xl bg-background/95">
+              <Mockup
+                type="responsive"
+                className="w-full rounded-2xl bg-background/95"
+              >
                 <DashboardPreview analysis={demoAnalysis} />
               </Mockup>
             </MockupFrame>

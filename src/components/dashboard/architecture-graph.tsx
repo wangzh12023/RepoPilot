@@ -1,6 +1,4 @@
 "use client";
-
-import { useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -87,7 +85,6 @@ export function ArchitectureGraph({
   edges,
   onSelectNode,
 }: ArchitectureGraphProps) {
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(nodes[0]?.id ?? null);
   const initialNodes = nodes.map((node) => ({
     ...node,
     type: "module" as const,
@@ -103,11 +100,12 @@ export function ArchitectureGraph({
     },
   }));
 
-  const [flowNodes, , onNodesChange] = useNodesState<RepoFlowNode>(initialNodes);
-  const [flowEdges, , onEdgesChange] = useEdgesState<RepoFlowEdge>(initialEdges);
+  const [flowNodes, , onNodesChange] =
+    useNodesState<RepoFlowNode>(initialNodes);
+  const [flowEdges, , onEdgesChange] =
+    useEdgesState<RepoFlowEdge>(initialEdges);
 
   const handleNodeSelect = (node: RepoFlowNode) => {
-    setSelectedNodeId(node.id);
     onSelectNode?.(node.data);
   };
 
@@ -141,7 +139,9 @@ export function ArchitectureGraph({
                     stroke: "var(--color-border)",
                   },
                 }}
-                onNodeClick={(_, node) => handleNodeSelect(node as RepoFlowNode)}
+                onNodeClick={(_, node) =>
+                  handleNodeSelect(node as RepoFlowNode)
+                }
               >
                 <Background
                   id="repo-grid"

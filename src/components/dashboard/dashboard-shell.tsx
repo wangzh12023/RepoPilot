@@ -117,7 +117,9 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
   }, []);
 
   if (!isReady) {
-    return <AnalysisLoadingView analysis={analysis} currentStep={currentStep} />;
+    return (
+      <AnalysisLoadingView analysis={analysis} currentStep={currentStep} />
+    );
   }
 
   return (
@@ -146,15 +148,15 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
                 <DialogTrigger render={<Button variant="outline" />}>
                   What was analyzed?
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-h-[min(80vh,42rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Repository analysis scope</DialogTitle>
                     <DialogDescription>
-                      This demo workspace grounds every card and chat response in the
-                      same repository evidence bundle.
+                      This demo workspace grounds every card and chat response
+                      in the same repository evidence bundle.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="grid max-h-[52vh] gap-3 overflow-y-auto pr-1">
+                  <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
                     {analysis.analysisSources.map((source) => (
                       <Card key={source.label} className="bg-muted/30">
                         <CardContent className="space-y-2 p-4">
@@ -180,259 +182,276 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-4">
-          <div className="flex flex-col gap-6 xl:flex-row">
-            <Tabs
-              value={activeTab}
-              onValueChange={(value) => {
-                const nextTab = value as DashboardTab;
-                setActiveTab(nextTab);
-                setSelectedContext(
-                  getDefaultContext(nextTab, architectureView, analysis),
-                );
-              }}
-              className="min-w-0 flex-1 gap-6"
-            >
-              <div className="overflow-x-auto">
-                <TabsList className="flex h-auto w-max min-w-full flex-wrap justify-start gap-2 bg-transparent p-0 md:min-w-0">
-                  <TabsTrigger value="overview" className="flex-none">
-                    Overview
-                  </TabsTrigger>
-                  <TabsTrigger value="architecture" className="flex-none">
-                    Architecture
-                  </TabsTrigger>
-                  <TabsTrigger value="learning" className="flex-none">
-                    Learning path
-                  </TabsTrigger>
-                  <TabsTrigger value="issues" className="flex-none">
-                    Contribution tasks
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+          <div className="flex flex-col gap-6 2xl:flex-row">
+            <div className="min-w-0 flex-1">
+              <Tabs
+                value={activeTab}
+                onValueChange={(value) => {
+                  const nextTab = value as DashboardTab;
+                  setActiveTab(nextTab);
+                  setSelectedContext(
+                    getDefaultContext(nextTab, architectureView, analysis),
+                  );
+                }}
+                className="min-w-0 gap-6"
+              >
+                <div className="overflow-x-auto">
+                  <TabsList className="flex h-auto w-max min-w-full flex-wrap justify-start gap-2 bg-transparent p-0 md:min-w-0">
+                    <TabsTrigger value="overview" className="flex-none">
+                      Overview
+                    </TabsTrigger>
+                    <TabsTrigger value="architecture" className="flex-none">
+                      Architecture
+                    </TabsTrigger>
+                    <TabsTrigger value="learning" className="flex-none">
+                      Learning path
+                    </TabsTrigger>
+                    <TabsTrigger value="issues" className="flex-none">
+                      Contribution tasks
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
-              <TabsContent value="overview" className="mt-0 min-w-0 space-y-6">
-                <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-                  {analysis.metrics.map((metric) => (
-                    <Card key={metric.label}>
-                      <CardHeader className="gap-1 pb-2">
-                        <CardDescription>{metric.label}</CardDescription>
-                        <CardTitle className="text-2xl">{metric.value}</CardTitle>
+                <TabsContent
+                  value="overview"
+                  className="mt-0 min-w-0 space-y-6"
+                >
+                  <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+                    {analysis.metrics.map((metric) => (
+                      <Card key={metric.label}>
+                        <CardHeader className="gap-1 pb-2">
+                          <CardDescription>{metric.label}</CardDescription>
+                          <CardTitle className="text-2xl">
+                            {metric.value}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0 text-sm text-muted-foreground">
+                          {metric.detail}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </section>
+
+                  <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                    <Card>
+                      <CardHeader className="gap-3">
+                        <div className="flex items-center gap-2">
+                          <SparklesIcon className="size-4 text-muted-foreground" />
+                          <CardTitle>Project overview</CardTitle>
+                        </div>
+                        <CardDescription className="max-w-full break-words leading-relaxed">
+                          {analysis.description}
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="pt-0 text-sm text-muted-foreground">
-                        {metric.detail}
+                      <CardContent className="space-y-4">
+                        <p className="text-sm font-medium">Key modules</p>
+                        <div className="grid gap-3">
+                          {analysis.modules.slice(0, 4).map((module) => (
+                            <button
+                              key={module.id}
+                              type="button"
+                              onClick={() =>
+                                setSelectedContext(createModuleContext(module))
+                              }
+                              className="w-full text-left"
+                            >
+                              <Card
+                                className={cn(
+                                  "bg-muted/30 transition-colors",
+                                  selectedContext.kind === "module" &&
+                                    selectedContext.key === module.id &&
+                                    "border-primary bg-primary/5",
+                                )}
+                              >
+                                <CardContent className="space-y-3 p-4">
+                                  <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div className="min-w-0 space-y-1">
+                                      <p className="text-sm font-medium">
+                                        {module.title}
+                                      </p>
+                                      <p className="max-w-full break-words font-mono text-xs text-muted-foreground">
+                                        {module.path}
+                                      </p>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        module.importance === "Core"
+                                          ? "default"
+                                          : module.importance === "High"
+                                            ? "secondary"
+                                            : "outline"
+                                      }
+                                    >
+                                      {module.importance}
+                                    </Badge>
+                                  </div>
+                                  <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
+                                    {module.summary}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Badge variant="outline">
+                                      {module.language}
+                                    </Badge>
+                                    <Badge variant="outline">
+                                      {module.framework}
+                                    </Badge>
+                                    <Badge variant="outline">
+                                      {module.coverage} coverage
+                                    </Badge>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </button>
+                          ))}
+                        </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </section>
 
-                <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                    <Card>
+                      <CardHeader className="gap-3">
+                        <div className="flex items-center gap-2">
+                          <BookOpenTextIcon className="size-4 text-muted-foreground" />
+                          <CardTitle>Code conventions</CardTitle>
+                        </div>
+                        <CardDescription>
+                          Repository-derived language stays explicit throughout
+                          the dashboard.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="grid gap-3">
+                        {analysis.conventions.map((convention) => (
+                          <Card key={convention} className="bg-muted/30">
+                            <CardContent className="flex items-start gap-3 p-4 text-sm text-muted-foreground">
+                              <BookOpenTextIcon className="mt-0.5 size-4 shrink-0" />
+                              <span className="max-w-full break-words leading-relaxed">
+                                {convention}
+                              </span>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </div>
+
                   <Card>
                     <CardHeader className="gap-3">
                       <div className="flex items-center gap-2">
-                        <SparklesIcon className="size-4 text-muted-foreground" />
-                        <CardTitle>Project overview</CardTitle>
+                        <ActivityIcon className="size-4 text-muted-foreground" />
+                        <CardTitle>Development workflow</CardTitle>
                       </div>
                       <CardDescription className="max-w-full break-words leading-relaxed">
-                        {analysis.description}
+                        The product flow stays visible from intake to grounded
+                        agent response.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm font-medium">Key modules</p>
-                      <div className="grid gap-3">
-                        {analysis.modules.slice(0, 4).map((module) => (
-                          <button
-                            key={module.id}
-                            type="button"
-                            onClick={() => setSelectedContext(createModuleContext(module))}
-                            className="w-full text-left"
-                          >
-                            <Card
-                              className={cn(
-                                "bg-muted/30 transition-colors",
-                                selectedContext.kind === "module" &&
-                                  selectedContext.key === module.id &&
-                                  "border-primary bg-primary/5",
-                              )}
-                            >
-                              <CardContent className="space-y-3 p-4">
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                  <div className="min-w-0 space-y-1">
-                                    <p className="text-sm font-medium">{module.title}</p>
-                                    <p className="max-w-full break-words font-mono text-xs text-muted-foreground">
-                                      {module.path}
-                                    </p>
-                                  </div>
-                                  <Badge
-                                    variant={
-                                      module.importance === "Core"
-                                        ? "default"
-                                        : module.importance === "High"
-                                          ? "secondary"
-                                          : "outline"
-                                    }
-                                  >
-                                    {module.importance}
-                                  </Badge>
-                                </div>
-                                <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
-                                  {module.summary}
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                  <Badge variant="outline">{module.language}</Badge>
-                                  <Badge variant="outline">{module.framework}</Badge>
-                                  <Badge variant="outline">
-                                    {module.coverage} coverage
-                                  </Badge>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </button>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="gap-3">
-                      <div className="flex items-center gap-2">
-                        <BookOpenTextIcon className="size-4 text-muted-foreground" />
-                        <CardTitle>Code conventions</CardTitle>
-                      </div>
-                      <CardDescription>
-                        Repository-derived language stays explicit throughout the
-                        dashboard.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-3">
-                      {analysis.conventions.map((convention) => (
-                        <Card key={convention} className="bg-muted/30">
-                          <CardContent className="flex items-start gap-3 p-4 text-sm text-muted-foreground">
-                            <BookOpenTextIcon className="mt-0.5 size-4 shrink-0" />
-                            <span className="max-w-full break-words leading-relaxed">
-                              {convention}
-                            </span>
+                    <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+                      {analysis.workflow.map((step, index) => (
+                        <Card key={step} className="bg-muted/30">
+                          <CardContent className="space-y-3 p-4">
+                            <Badge variant="outline">Step {index + 1}</Badge>
+                            <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
+                              {step}
+                            </p>
                           </CardContent>
                         </Card>
                       ))}
                     </CardContent>
                   </Card>
-                </div>
+                </TabsContent>
 
-                <Card>
-                  <CardHeader className="gap-3">
-                    <div className="flex items-center gap-2">
-                      <ActivityIcon className="size-4 text-muted-foreground" />
-                      <CardTitle>Development workflow</CardTitle>
-                    </div>
-                    <CardDescription className="max-w-full break-words leading-relaxed">
-                      The product flow stays visible from intake to grounded agent
-                      response.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-                    {analysis.workflow.map((step, index) => (
-                      <Card key={step} className="bg-muted/30">
-                        <CardContent className="space-y-3 p-4">
-                          <Badge variant="outline">Step {index + 1}</Badge>
-                          <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
-                            {step}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="architecture" className="mt-0 min-w-0 space-y-4">
-                <Tabs
-                  value={architectureView}
-                  onValueChange={(value) => {
-                    const nextView = value as ArchitectureView;
-                    setArchitectureView(nextView);
-                    setSelectedContext(
-                      getDefaultContext("architecture", nextView, analysis),
-                    );
-                  }}
-                  className="min-w-0 gap-4"
+                <TabsContent
+                  value="architecture"
+                  className="mt-0 min-w-0 space-y-4"
                 >
-                  <div className="overflow-x-auto">
-                    <TabsList className="flex h-auto w-max min-w-full justify-start gap-2 bg-transparent p-0 md:min-w-0">
-                      <TabsTrigger value="system-map" className="flex-none">
-                        Repository architecture
-                      </TabsTrigger>
-                      <TabsTrigger value="code-map" className="flex-none">
-                        Code map
-                      </TabsTrigger>
-                    </TabsList>
+                  <Tabs
+                    value={architectureView}
+                    onValueChange={(value) => {
+                      const nextView = value as ArchitectureView;
+                      setArchitectureView(nextView);
+                      setSelectedContext(
+                        getDefaultContext("architecture", nextView, analysis),
+                      );
+                    }}
+                    className="min-w-0 gap-4"
+                  >
+                    <div className="overflow-x-auto">
+                      <TabsList className="flex h-auto w-max min-w-full justify-start gap-2 bg-transparent p-0 md:min-w-0">
+                        <TabsTrigger value="system-map" className="flex-none">
+                          Repository architecture
+                        </TabsTrigger>
+                        <TabsTrigger value="code-map" className="flex-none">
+                          Code map
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+
+                    <TabsContent value="system-map" className="mt-0 min-w-0">
+                      <ArchitectureGraph
+                        key="system-map"
+                        title="Repository architecture"
+                        description="Follow the intake, indexing, and grounded answer pipeline without compressing the graph into a narrow column."
+                        nodes={analysis.architectureGraph.nodes}
+                        edges={analysis.architectureGraph.edges}
+                        onSelectNode={(node) =>
+                          setSelectedContext(createGraphContext(node))
+                        }
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="code-map" className="mt-0 min-w-0">
+                      <ArchitectureGraph
+                        key="code-map"
+                        title="Code map"
+                        description="Trace how landing, dashboard, graph, and chat files connect inside the current codebase."
+                        nodes={analysis.codeMapGraph.nodes}
+                        edges={analysis.codeMapGraph.edges}
+                        onSelectNode={(node) =>
+                          setSelectedContext(createGraphContext(node))
+                        }
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
+
+                <TabsContent value="learning" className="mt-0 min-w-0">
+                  <LearningPath
+                    analysis={analysis}
+                    selectedStepId={
+                      activeTab === "learning" ? selectedContext.key : undefined
+                    }
+                    onSelectStep={(step) =>
+                      setSelectedContext(createLearningContext(step))
+                    }
+                  />
+                </TabsContent>
+
+                <TabsContent value="issues" className="mt-0 min-w-0 space-y-6">
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    {analysis.issues.map((issue) => (
+                      <IssueCard
+                        key={issue.id}
+                        issue={issue}
+                        isSelected={
+                          selectedContext.kind === "issue" &&
+                          selectedContext.key === issue.id
+                        }
+                        onSelect={(nextIssue) =>
+                          setSelectedContext(createIssueContext(nextIssue))
+                        }
+                      />
+                    ))}
                   </div>
+                </TabsContent>
+              </Tabs>
+            </div>
 
-                  <TabsContent value="system-map" className="mt-0 min-w-0">
-                    <ArchitectureGraph
-                      key="system-map"
-                      title="Repository architecture"
-                      description="Follow the intake, indexing, and grounded answer pipeline without compressing the graph into a narrow column."
-                      nodes={analysis.architectureGraph.nodes}
-                      edges={analysis.architectureGraph.edges}
-                      onSelectNode={(node) =>
-                        setSelectedContext(createGraphContext(node))
-                      }
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="code-map" className="mt-0 min-w-0">
-                    <ArchitectureGraph
-                      key="code-map"
-                      title="Code map"
-                      description="Trace how landing, dashboard, graph, and chat files connect inside the current codebase."
-                      nodes={analysis.codeMapGraph.nodes}
-                      edges={analysis.codeMapGraph.edges}
-                      onSelectNode={(node) =>
-                        setSelectedContext(createGraphContext(node))
-                      }
-                    />
-                  </TabsContent>
-                </Tabs>
-              </TabsContent>
-
-              <TabsContent value="learning" className="mt-0 min-w-0">
-                <LearningPath
-                  analysis={analysis}
-                  selectedStepId={
-                    activeTab === "learning" ? selectedContext.key : undefined
-                  }
-                  onSelectStep={(step) =>
-                    setSelectedContext(createLearningContext(step))
-                  }
-                />
-              </TabsContent>
-
-              <TabsContent value="issues" className="mt-0 min-w-0 space-y-6">
-                <div className="grid gap-4 xl:grid-cols-2">
-                  {analysis.issues.map((issue) => (
-                    <IssueCard
-                      key={issue.id}
-                      issue={issue}
-                      isSelected={
-                        selectedContext.kind === "issue" &&
-                        selectedContext.key === issue.id
-                      }
-                      onSelect={(nextIssue) =>
-                        setSelectedContext(createIssueContext(nextIssue))
-                      }
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <Collapsible
-              open={isDetailPanelOpen}
-              className={cn(
-                "w-full shrink-0 xl:transition-[width]",
-                isDetailPanelOpen ? "xl:w-[380px]" : "xl:w-16",
-              )}
-            >
-              <aside className="min-w-0">
+            <Collapsible open={isDetailPanelOpen}>
+              <aside
+                className={cn(
+                  "min-w-0 w-full shrink-0 2xl:transition-[width]",
+                  isDetailPanelOpen ? "2xl:w-[380px]" : "2xl:w-16",
+                )}
+              >
                 <Card className="overflow-hidden">
                   <CardHeader
                     className={cn(
@@ -450,9 +469,12 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
                     >
                       {isDetailPanelOpen ? (
                         <div className="space-y-1">
-                          <CardTitle className="text-base">Detail panel</CardTitle>
+                          <CardTitle className="text-base">
+                            Detail panel
+                          </CardTitle>
                           <CardDescription>
-                            Current module, issue, or file details with Agent Chat.
+                            Current module, issue, or file details with Agent
+                            Chat.
                           </CardDescription>
                         </div>
                       ) : null}
@@ -482,7 +504,10 @@ function DashboardWorkspace({ analysis }: { analysis: RepoAnalysis }) {
                   <CollapsibleContent>
                     <CardContent className="grid gap-6 p-4">
                       <DetailPanelCard context={selectedContext} />
-                      <RepoChatPanel analysis={analysis} className="min-h-[520px]" />
+                      <RepoChatPanel
+                        analysis={analysis}
+                        className="min-h-[420px] xl:min-h-[520px]"
+                      />
                     </CardContent>
                   </CollapsibleContent>
                 </Card>
@@ -547,7 +572,8 @@ function createGraphContext(node: GraphNodeData): DetailContext {
       `${node.coverage} coverage`,
     ].filter((value) => value && value !== "n/a coverage"),
     hintLabel: "Use this in context",
-    hintText: "Selecting nodes keeps the graph full width while moving the file detail into the right panel.",
+    hintText:
+      "Selecting nodes keeps the graph full width while moving the file detail into the right panel.",
   };
 }
 
@@ -771,11 +797,16 @@ function AnalysisLoadingView({
             </CardHeader>
             <CardContent className="grid gap-3">
               {analysis.modules.slice(0, 4).map((module) => (
-                <div key={module.id} className="rounded-xl border bg-background p-4">
+                <div
+                  key={module.id}
+                  className="rounded-xl border bg-background p-4"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">{module.title}</p>
                     <Badge
-                      variant={module.importance === "Core" ? "default" : "secondary"}
+                      variant={
+                        module.importance === "Core" ? "default" : "secondary"
+                      }
                     >
                       {module.importance}
                     </Badge>
@@ -797,7 +828,10 @@ function AnalysisLoadingView({
             </CardHeader>
             <CardContent className="grid gap-3">
               {analysis.issues.slice(0, 3).map((issue) => (
-                <div key={issue.id} className="rounded-xl border bg-background p-4">
+                <div
+                  key={issue.id}
+                  className="rounded-xl border bg-background p-4"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">
                       {issue.id} {issue.title}
@@ -901,7 +935,9 @@ function IssueCard({
               <Card className="bg-muted/30">
                 <CardContent className="space-y-3 p-4">
                   <p className="text-sm font-medium">Best first step</p>
-                  <p className="text-sm text-muted-foreground">{issue.firstStep}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {issue.firstStep}
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-muted/30">
