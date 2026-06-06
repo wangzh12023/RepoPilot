@@ -60,13 +60,13 @@
 Paste a GitHub repository URL and RepoPilot turns it into an interactive architecture map, grounded chat workspace, learning path, and contribution guide.
 
 <p align="center">
-  <a href="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/repopilot-demo.mp4">
+  <a href="https://github.com/wangzh12023/RepoPilot/raw/main/public/repopilot-demo.mp4">
     <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/landing-v2.png" width="100%" alt="RepoPilot demo preview" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/repopilot-demo.mp4"><b>▶ Watch the demo video</b></a>
+  <a href="https://github.com/wangzh12023/RepoPilot/raw/main/public/repopilot-demo.mp4"><b>▶ Watch the demo video</b></a>
 </p>
 
 ## 🖼️ Product Preview
@@ -186,6 +186,29 @@ GITHUB_TOKEN=your_github_token
 
 ```bash
 npm run dev
+```
+
+Open `http://localhost:3000`.
+
+## 🐳 Docker Deployment
+
+### Option 1. One-command Docker Compose
+
+```bash
+cp .env.example .env.local
+docker compose up --build
+# or, if your Docker installation still uses the legacy plugin:
+docker-compose up --build
+```
+
+Open `http://localhost:3000`.
+
+### Option 2. Plain Docker
+
+```bash
+cp .env.example .env.local
+docker build -t repopilot .
+docker run --rm -p 3000:3000 --env-file .env.local repopilot
 ```
 
 Open `http://localhost:3000`.
