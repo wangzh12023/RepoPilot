@@ -200,8 +200,8 @@ export function LandingPage() {
             GitHub Repository Learning Assistant
           </Badge>
         }
-        title="Paste any GitHub repository. Learn the architecture before you open the code."
-        description="An AI workspace that scans README, directory tree, dependencies, tests, docs, and issues, then turns the repository into an architecture map, grounded agent chat, and contributor-ready learning path."
+        title="RepoPilot"
+        description="Paste any GitHub repository and learn the architecture before you open the code. An AI workspace that scans README, directory tree, dependencies, tests, docs, and issues, then turns the repository into an architecture map, grounded agent chat, and contributor-ready learning path."
         actions={<RepoUrlForm />}
         mockup={<DashboardPreview analysis={demoAnalysis} compact />}
       />
