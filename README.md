@@ -59,32 +59,37 @@
 
 Paste a GitHub repository URL and RepoPilot turns it into an interactive architecture map, grounded chat workspace, learning path, and contribution guide.
 
-<video src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/repopilot-demo.mp4" controls muted playsinline width="100%"></video>
+<p align="center">
+  <a href="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/repopilot-demo.mp4">
+    <img src="./public/readme-assets/landing.png" width="100%" alt="RepoPilot demo preview" />
+  </a>
+</p>
 
-If your GitHub client does not render the embedded player, open the asset directly:
-[Open demo video](https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/repopilot-demo.mp4)
+<p align="center">
+  <a href="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/repopilot-demo.mp4"><b>▶ Watch the demo video</b></a>
+</p>
 
 ## 🖼️ Product Preview
 
 <p align="center">
-  <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/landing.png" width="100%" alt="RepoPilot landing page" />
+  <img src="./public/readme-assets/landing.png" width="100%" alt="RepoPilot landing page" />
 </p>
 
 <table>
   <tr>
     <td width="50%">
-      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/dashboard-overview.png" alt="RepoPilot dashboard overview" />
+      <img src="./public/readme-assets/dashboard-overview.png" alt="RepoPilot dashboard overview" />
     </td>
     <td width="50%">
-      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/architecture.png" alt="RepoPilot architecture section" />
+      <img src="./public/readme-assets/architecture.png" alt="RepoPilot architecture section" />
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/chat.png" alt="RepoPilot grounded chat panel" />
+      <img src="./public/readme-assets/chat.png" alt="RepoPilot grounded chat panel" />
     </td>
     <td width="50%">
-      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/sidebar.png" alt="RepoPilot sidebar and contribution tasks" />
+      <img src="./public/readme-assets/sidebar.png" alt="RepoPilot sidebar and contribution tasks" />
     </td>
   </tr>
 </table>
