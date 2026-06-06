@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 
@@ -26,7 +26,7 @@ export function RepoUrlForm({
 }: RepoUrlFormProps) {
   const router = useRouter();
   const [repoUrl, setRepoUrl] = useState(defaultValue);
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const runAnalysis = (candidate?: string) => {
@@ -38,11 +38,9 @@ export function RepoUrlForm({
     }
 
     setError(null);
-    setIsPending(true);
 
     startTransition(() => {
       router.push(`/dashboard?repo=${encodeURIComponent(nextRepoUrl)}`);
-      setIsPending(false);
     });
   };
 
@@ -56,9 +54,10 @@ export function RepoUrlForm({
             placeholder="https://github.com/owner/repository"
             className="font-mono"
             aria-label="GitHub repository URL"
+            disabled={isPending}
           />
           <Button type="button" onClick={() => runAnalysis()} disabled={isPending}>
-            {isPending ? "Analyzing..." : "Analyze"}
+            {isPending ? "Opening workspace..." : "Analyze"}
           </Button>
         </div>
         {error ? (
@@ -93,14 +92,15 @@ export function RepoUrlForm({
         <CardContent className="space-y-4 pt-6">
           <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto]">
             <Input
-              value={repoUrl}
-              onChange={(event) => setRepoUrl(event.target.value)}
-              placeholder="https://github.com/owner/repository"
-              className="h-11 font-mono"
-              aria-label="GitHub repository URL"
-            />
+            value={repoUrl}
+            onChange={(event) => setRepoUrl(event.target.value)}
+            placeholder="https://github.com/owner/repository"
+            className="h-11 font-mono"
+            aria-label="GitHub repository URL"
+            disabled={isPending}
+          />
             <Button type="button" size="lg" onClick={() => runAnalysis()} disabled={isPending}>
-              {isPending ? "Analyzing..." : "Analyze Repo"}
+              {isPending ? "Opening workspace..." : "Analyze Repo"}
               <ArrowRightIcon className="size-4" />
             </Button>
             <Button
@@ -108,6 +108,7 @@ export function RepoUrlForm({
               variant="outline"
               size="lg"
               onClick={() => runAnalysis(SAMPLE_REPO_URL)}
+              disabled={isPending}
             >
               <Github className="size-4" />
               Open Demo

@@ -7,10 +7,12 @@ import {
   BookOpenTextIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Clock3Icon,
   FileCode2Icon,
   GitPullRequestIcon,
   Layers3Icon,
-  ListTodoIcon,
+  LoaderCircleIcon,
+  MessageSquareMoreIcon,
   NetworkIcon,
   SearchCheckIcon,
   SparklesIcon,
@@ -61,11 +63,34 @@ import {
 import type { RepoDataSource } from "@/lib/repo-analysis-runtime";
 
 const ANALYSIS_STEPS = [
-  "Reading README and contributor docs",
-  "Mapping the directory tree and key modules",
-  "Inspecting dependencies and framework choices",
-  "Scoring tests, docs, and coverage signals",
-  "Linking issues to files and contribution paths",
+  {
+    title: "Fetching repository context",
+    detail: "Reading README, package manifest, and default branch metadata.",
+  },
+  {
+    title: "Scanning the directory tree",
+    detail: "Sampling source, docs, and test files to find high-signal paths.",
+  },
+  {
+    title: "Inspecting stack and runtime boundaries",
+    detail: "Linking dependencies, languages, and framework-level entrypoints.",
+  },
+  {
+    title: "Synthesizing contributor context",
+    detail: "Matching issues, validation signals, and docs to concrete files.",
+  },
+  {
+    title: "Composing the workspace",
+    detail: "Preparing overview cards, graph data, learning path, and chat context.",
+  },
+];
+
+const DASHBOARD_OUTPUTS = [
+  "Project overview and key modules",
+  "Architecture map and code map",
+  "Repository learning path",
+  "Contribution tasks and issue briefs",
+  "Grounded agent chat references",
 ];
 
 type DashboardTab = "overview" | "architecture" | "learning" | "issues";
@@ -99,14 +124,20 @@ function DashboardAnalysisLoader({ repoUrl }: { repoUrl: string }) {
   const [dataSource, setDataSource] = useState<RepoDataSource>("mock");
   const [warning, setWarning] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isActive = true;
 
     const stepTimer = window.setInterval(() => {
-      setCurrentStep((value) => (value < ANALYSIS_STEPS.length ? value + 1 : value));
-    }, 350);
+      setCurrentStep((value) =>
+        value < ANALYSIS_STEPS.length - 1 ? value + 1 : value,
+      );
+    }, 2200);
+    const elapsedTimer = window.setInterval(() => {
+      setElapsedSeconds((value) => value + 1);
+    }, 1000);
 
     void fetchRepoAnalysis(repoUrl)
       .then((response) => {
@@ -137,6 +168,7 @@ function DashboardAnalysisLoader({ repoUrl }: { repoUrl: string }) {
         }
 
         window.clearInterval(stepTimer);
+        window.clearInterval(elapsedTimer);
         setCurrentStep(ANALYSIS_STEPS.length);
         setIsLoading(false);
       });
@@ -144,12 +176,17 @@ function DashboardAnalysisLoader({ repoUrl }: { repoUrl: string }) {
     return () => {
       isActive = false;
       window.clearInterval(stepTimer);
+      window.clearInterval(elapsedTimer);
     };
   }, [fallbackAnalysis, repoUrl]);
 
   if (isLoading) {
     return (
-      <AnalysisLoadingView analysis={fallbackAnalysis} currentStep={currentStep} />
+      <AnalysisLoadingView
+        analysis={fallbackAnalysis}
+        currentStep={currentStep}
+        elapsedSeconds={elapsedSeconds}
+      />
     );
   }
 
@@ -781,54 +818,99 @@ function DetailPanelCard({ context }: { context: DetailContext }) {
 function AnalysisLoadingView({
   analysis,
   currentStep,
+  elapsedSeconds,
 }: {
   analysis: RepoAnalysis;
   currentStep: number;
+  elapsedSeconds: number;
 }) {
-  const progressValue = Math.max(
-    Math.round((currentStep / ANALYSIS_STEPS.length) * 100),
-    10,
+  const progressValue = Math.min(
+    92,
+    Math.max(14, 18 + currentStep * 14 + elapsedSeconds * 2),
   );
+  const activeStepIndex = Math.min(currentStep, ANALYSIS_STEPS.length - 1);
+  const elapsedLabel =
+    elapsedSeconds < 60
+      ? `${elapsedSeconds}s`
+      : `${Math.floor(elapsedSeconds / 60)}m ${elapsedSeconds % 60}s`;
+  const isSlowRequest = elapsedSeconds >= 12;
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-5xl items-center px-4 py-16">
-      <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+    <div className="mx-auto flex min-h-svh w-full max-w-6xl items-center px-4 py-16">
+      <div className="grid w-full gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <Card className="overflow-hidden">
           <CardHeader className="gap-3 border-b">
-            <div className="flex items-center gap-2">
-              <SearchCheckIcon className="size-4 text-muted-foreground" />
-              <CardTitle>Analyzing {analysis.slug}</CardTitle>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <SearchCheckIcon className="size-4 text-muted-foreground" />
+                <CardTitle>Analyzing {analysis.slug}</CardTitle>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="brand-secondary">Live GitHub analysis</Badge>
+                <Badge variant="outline" className="gap-1.5">
+                  <Clock3Icon className="size-3.5" />
+                  {elapsedLabel}
+                </Badge>
+              </div>
             </div>
             <CardDescription>
-              Building the grounded repository workspace from README, tree,
-              dependencies, tests, docs, and issues.
+              Building the workspace from live repository signals. The first run
+              can take longer while GitHub context and model analysis are both
+              being computed.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 p-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">Pipeline progress</span>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground">Pipeline progress</span>
+                  <p className="text-xs text-muted-foreground">
+                    {ANALYSIS_STEPS[activeStepIndex]?.title}
+                  </p>
+                </div>
                 <span className="font-medium">{progressValue}%</span>
               </div>
               <Progress value={progressValue} />
+              {isSlowRequest ? (
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Still working. Large repositories often take 10-30 seconds on
+                  the first live pass. Successful results are cached for refreshes.
+                </p>
+              ) : null}
             </div>
             <div className="grid gap-3">
               {ANALYSIS_STEPS.map((step, index) => (
                 <Card
-                  key={step}
-                  className={
-                    currentStep >= index + 1 ? "bg-primary/5" : "bg-muted/30"
-                  }
+                  key={step.title}
+                  className={cn(
+                    index < activeStepIndex && "bg-primary/5",
+                    index === activeStepIndex && "border-primary bg-primary/5",
+                    index > activeStepIndex && "bg-muted/30",
+                  )}
                 >
                   <CardContent className="flex items-center gap-3 p-4">
                     <span className="flex size-8 items-center justify-center rounded-full border bg-background text-xs font-semibold">
-                      {index + 1}
+                      {index < activeStepIndex ? (
+                        "OK"
+                      ) : index === activeStepIndex ? (
+                        <LoaderCircleIcon className="size-3.5 animate-spin" />
+                      ) : (
+                        index + 1
+                      )}
                     </span>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{step}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium">{step.title}</p>
+                        <Badge variant="outline">
+                          {index < activeStepIndex
+                            ? "Completed"
+                            : index === activeStepIndex
+                              ? "Running"
+                              : "Queued"}
+                        </Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {analysis.analysisSources[index]?.detail ??
-                          "Synthesizing the final contributor-ready view."}
+                        {step.detail}
                       </p>
                     </div>
                   </CardContent>
@@ -843,15 +925,16 @@ function AnalysisLoadingView({
             <CardHeader className="gap-3">
               <div className="flex items-center gap-2">
                 <Layers3Icon className="size-4 text-muted-foreground" />
-                <CardTitle>Signals already discovered</CardTitle>
+                <CardTitle>Evidence bundle</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              {analysis.analysisSources.map((source) => (
-                <Badge key={source.label} variant="outline">
-                  {source.label}
-                </Badge>
-              ))}
+              <Badge variant="outline">README</Badge>
+              <Badge variant="outline">Directory tree</Badge>
+              <Badge variant="outline">Dependencies</Badge>
+              <Badge variant="outline">Tests</Badge>
+              <Badge variant="outline">Docs</Badge>
+              <Badge variant="outline">Issues</Badge>
             </CardContent>
           </Card>
 
@@ -859,28 +942,23 @@ function AnalysisLoadingView({
             <CardHeader className="gap-3">
               <div className="flex items-center gap-2">
                 <NetworkIcon className="size-4 text-muted-foreground" />
-                <CardTitle>Modules being prioritized</CardTitle>
+                <CardTitle>What will populate next</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {analysis.modules.slice(0, 4).map((module) => (
+              {DASHBOARD_OUTPUTS.map((output, index) => (
                 <div
-                  key={module.id}
+                  key={output}
                   className="rounded-xl border bg-background p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium">{module.title}</p>
-                    <Badge
-                      variant={
-                        module.importance === "Core" ? "default" : "secondary"
-                      }
-                    >
-                      {module.importance}
+                    <p className="text-sm font-medium">{output}</p>
+                    <Badge variant={index === 0 ? "default" : "outline"}>
+                      Pending
                     </Badge>
                   </div>
-                  <p className="mt-1 font-mono text-xs text-muted-foreground">
-                    {module.path}
-                  </p>
+                  <div className="mt-3 h-2 w-full rounded-full bg-muted" />
+                  <div className="mt-2 h-2 w-4/5 rounded-full bg-muted" />
                 </div>
               ))}
             </CardContent>
@@ -889,37 +967,32 @@ function AnalysisLoadingView({
           <Card className="bg-muted/30">
             <CardHeader className="gap-3">
               <div className="flex items-center gap-2">
-                <ListTodoIcon className="size-4 text-muted-foreground" />
-                <CardTitle>Starter issues queued</CardTitle>
+                <MessageSquareMoreIcon className="size-4 text-muted-foreground" />
+                <CardTitle>What to expect</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {analysis.issues.slice(0, 3).map((issue) => (
-                <div
-                  key={issue.id}
-                  className="rounded-xl border bg-background p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium">
-                      {issue.id} {issue.title}
-                    </p>
-                    <Badge
-                      variant={
-                        issue.difficulty === "Starter"
-                          ? "default"
-                          : issue.difficulty === "Intermediate"
-                            ? "secondary"
-                            : "destructive"
-                      }
-                    >
-                      {issue.difficulty}
-                    </Badge>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {issue.firstStep}
-                  </p>
-                </div>
-              ))}
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-sm font-medium">Large repositories</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  The graph and learning path are generated after GitHub context
+                  fetch and model synthesis both finish. First pass is the slowest.
+                </p>
+              </div>
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-sm font-medium">Grounded results</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Final cards and chat references are built from real file paths,
+                  modules, docs, tests, and issue signals for {analysis.slug}.
+                </p>
+              </div>
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-sm font-medium">Cached refreshes</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Once the live analysis completes, revisiting the same repo is
+                  much faster because the normalized analysis is cached server-side.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
