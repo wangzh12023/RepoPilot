@@ -61,7 +61,7 @@ Paste a GitHub repository URL and RepoPilot turns it into an interactive archite
 
 <p align="center">
   <a href="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/repopilot-demo.mp4">
-    <img src="./public/readme-assets/landing.png" width="100%" alt="RepoPilot demo preview" />
+    <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/landing-v2.png" width="100%" alt="RepoPilot demo preview" />
   </a>
 </p>
 
@@ -72,24 +72,24 @@ Paste a GitHub repository URL and RepoPilot turns it into an interactive archite
 ## 🖼️ Product Preview
 
 <p align="center">
-  <img src="./public/readme-assets/landing.png" width="100%" alt="RepoPilot landing page" />
+  <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/landing-v2.png" width="100%" alt="RepoPilot landing page" />
 </p>
 
 <table>
   <tr>
     <td width="50%">
-      <img src="./public/readme-assets/dashboard-overview.png" alt="RepoPilot dashboard overview" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/dashboard-overview-v2.png" alt="RepoPilot dashboard overview" />
     </td>
     <td width="50%">
-      <img src="./public/readme-assets/architecture.png" alt="RepoPilot architecture section" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/architecture.png" alt="RepoPilot architecture section" />
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="./public/readme-assets/chat.png" alt="RepoPilot grounded chat panel" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/chat.png" alt="RepoPilot grounded chat panel" />
     </td>
     <td width="50%">
-      <img src="./public/readme-assets/sidebar.png" alt="RepoPilot sidebar and contribution tasks" />
+      <img src="https://github.com/wangzh12023/RepoPilot/releases/download/readme-media-v1/sidebar.png" alt="RepoPilot sidebar and contribution tasks" />
     </td>
   </tr>
 </table>
