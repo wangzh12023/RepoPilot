@@ -413,7 +413,7 @@ function DashboardWorkspace({
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                       {analysis.workflow.map((step, index) => (
-                        <Card key={step} className="bg-muted/30">
+                        <Card key={`${index}-${step}`} className="bg-muted/30">
                           <CardContent className="space-y-3 p-4">
                             <Badge variant="outline">Step {index + 1}</Badge>
                             <p className="max-w-full break-words text-sm leading-relaxed text-muted-foreground">
@@ -973,15 +973,15 @@ function IssueCard({
           {issue.summary}
         </p>
         <div className="flex flex-wrap gap-2">
-          {issue.labels.map((label) => (
-            <Badge key={label} variant="outline">
+          {issue.labels.map((label, index) => (
+            <Badge key={`${issue.id}-label-${index}-${label}`} variant="outline">
               {label}
             </Badge>
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          {issue.files.map((file) => (
-            <Badge key={file} variant="outline">
+          {issue.files.map((file, index) => (
+            <Badge key={`${issue.id}-file-${index}-${file}`} variant="outline">
               {file}
             </Badge>
           ))}
@@ -1011,8 +1011,8 @@ function IssueCard({
                 <CardContent className="space-y-3 p-4">
                   <p className="text-sm font-medium">Files involved</p>
                   <div className="flex flex-wrap gap-2">
-                    {issue.files.map((file) => (
-                      <Badge key={file} variant="outline">
+                    {issue.files.map((file, index) => (
+                      <Badge key={`${issue.id}-dialog-file-${index}-${file}`} variant="outline">
                         {file}
                       </Badge>
                     ))}

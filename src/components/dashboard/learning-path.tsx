@@ -63,8 +63,8 @@ export function LearningPath({
                     <p className="text-sm font-medium">Files to inspect</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {step.files.map((file) => (
-                      <Badge key={file} variant="outline">
+                    {step.files.map((file, index) => (
+                      <Badge key={`${step.id}-file-${index}-${file}`} variant="outline">
                         {file}
                       </Badge>
                     ))}
@@ -73,8 +73,8 @@ export function LearningPath({
                 <div className="space-y-3">
                   <p className="text-sm font-medium">Deliverables</p>
                   <div className="grid gap-2">
-                    {step.deliverables.map((deliverable) => (
-                      <Card key={deliverable} className="bg-muted/30">
+                    {step.deliverables.map((deliverable, index) => (
+                      <Card key={`${step.id}-deliverable-${index}`} className="bg-muted/30">
                         <CardContent className="flex items-start gap-2 p-3 text-sm text-muted-foreground">
                           <ArrowRightIcon className="mt-0.5 size-4 shrink-0" />
                           <span className="max-w-full break-words leading-relaxed">

@@ -97,7 +97,7 @@ export async function fetchGitHubRepoContext(repoUrl: string) {
       config.githubToken,
     ).catch(() => ({})),
     githubRequest<GitHubIssueApiResponse[]>(
-      `/repos/${identity.owner}/${identity.name}/issues?state=open&per_page=10`,
+      `/repos/${identity.owner}/${identity.name}/issues?state=open&per_page=8`,
       config.githubToken,
     ).catch(() => []),
     githubRequest<GitHubCommitApiResponse[]>(
@@ -137,7 +137,7 @@ export async function fetchGitHubRepoContext(repoUrl: string) {
       .map((issue) => ({
         id: `#${issue.number}`,
         title: issue.title,
-        body: truncateText(issue.body ?? "", 1200),
+        body: truncateText(issue.body ?? "", 800),
         labels: issue.labels.map((label) => label.name),
         url: issue.html_url,
       })),
@@ -150,11 +150,11 @@ export function serializeRepoContextForModel(repoContext: GitHubRepoContext) {
     `Description: ${repoContext.description}`,
     `Default branch: ${repoContext.defaultBranch}`,
     `Latest commit date: ${repoContext.latestCommitDate ?? "unknown"}`,
-    `README excerpt:\n${truncateText(repoContext.readme || "No README available.", 5000)}`,
-    `Package manifest:\n${truncateText(repoContext.packageJson || "No package.json available.", 4000)}`,
+    `README excerpt:\n${truncateText(repoContext.readme || "No README available.", 3500)}`,
+    `Package manifest:\n${truncateText(repoContext.packageJson || "No package.json available.", 2500)}`,
     `Stack hints: ${repoContext.stackHints.join(", ") || "None detected"}`,
-    `Documentation files:\n${repoContext.docPaths.slice(0, 40).join("\n") || "No docs files detected"}`,
-    `Test files:\n${repoContext.testPaths.slice(0, 40).join("\n") || "No tests detected"}`,
+    `Documentation files:\n${repoContext.docPaths.slice(0, 24).join("\n") || "No docs files detected"}`,
+    `Test files:\n${repoContext.testPaths.slice(0, 24).join("\n") || "No tests detected"}`,
     `Notable repository paths:\n${repoContext.notablePaths.join("\n")}`,
     `Open issues:\n${repoContext.openIssues
       .map(
@@ -168,7 +168,7 @@ export function serializeRepoContextForModel(repoContext: GitHubRepoContext) {
 function selectNotablePaths(treePaths: string[]) {
   return [...treePaths]
     .sort((leftPath, rightPath) => scorePath(rightPath) - scorePath(leftPath))
-    .slice(0, 140)
+    .slice(0, 90)
     .sort((leftPath, rightPath) => leftPath.localeCompare(rightPath));
 }
 

@@ -119,13 +119,6 @@ export async function analyzeRepository(
         ? `Live analysis failed. Falling back to mock data: ${error.message}`
         : "Live analysis failed. Falling back to mock data.";
 
-    setRepoAnalysisCache(fallbackAnalysis.repoUrl, {
-      analysis: fallbackAnalysis,
-      repoContext: null,
-      source: "mock",
-      warning,
-    });
-
     return {
       analysis: fallbackAnalysis,
       source: "mock",
@@ -385,17 +378,17 @@ function buildRepoAnalysis(
   repoContext: GitHubRepoContext,
   modelOutput: LiveAnalysisModelOutput | null,
 ): RepoAnalysis {
-  const fallbackAnalysis = getRepoAnalysis(repoContext.repoUrl);
+  const contextFallback = buildContextFallback(repoContext);
   const normalizedIssues = normalizeIssues(
     modelOutput?.issues,
     repoContext,
-    fallbackAnalysis.issues,
+    contextFallback.issues,
   );
   const normalizedModules = normalizeModules(
     modelOutput?.modules,
     repoContext,
     normalizedIssues,
-    fallbackAnalysis.modules,
+    contextFallback.modules,
   );
 
   const architectureDescriptors = normalizeGraphDescriptors(
@@ -431,7 +424,7 @@ function buildRepoAnalysis(
     ),
     stack: normalizeStringList(
       modelOutput?.stack,
-      repoContext.stackHints.length > 0 ? repoContext.stackHints : fallbackAnalysis.stack,
+      contextFallback.stack,
       6,
     ),
     analysisSources: normalizeAnalysisSources(
@@ -440,25 +433,20 @@ function buildRepoAnalysis(
     ),
     modules: normalizedModules,
     issues: normalizedIssues,
-    workflow: normalizeStringList(modelOutput?.workflow, fallbackAnalysis.workflow, 5),
+    workflow: normalizeStringList(modelOutput?.workflow, contextFallback.workflow, 5),
     conventions: normalizeStringList(
       modelOutput?.conventions,
-      fallbackAnalysis.conventions,
+      contextFallback.conventions,
       5,
     ),
     learningPath: normalizeLearningPath(
       modelOutput?.learningPath,
       repoContext,
-      fallbackAnalysis.learningPath,
+      contextFallback.learningPath,
     ),
     suggestions: normalizeStringList(
       modelOutput?.suggestions,
-      [
-        `Explain the architecture of ${repoContext.slug}.`,
-        "Which module should I read first?",
-        "What is the safest first contribution here?",
-        "How do tests and docs shape this codebase?",
-      ],
+      contextFallback.suggestions,
       4,
     ),
     architectureGraph: {
@@ -478,6 +466,270 @@ function buildRepoAnalysis(
   };
 }
 
+function buildContextFallback(repoContext: GitHubRepoContext) {
+  const primaryLanguage = inferPrimaryLanguage(repoContext);
+  const stack = repoContext.stackHints.length > 0
+    ? repoContext.stackHints
+    : [primaryLanguage, "GitHub"];
+  const workflow = buildFallbackWorkflow(repoContext);
+  const conventions = buildFallbackConventions(repoContext);
+  const modules = buildFallbackModules(repoContext);
+  const issues = buildFallbackIssues(repoContext, modules);
+  const learningPath = buildFallbackLearningPath(repoContext, modules, issues);
+  const suggestions = buildFallbackSuggestions(repoContext, modules);
+
+  return {
+    stack,
+    workflow,
+    conventions,
+    modules,
+    issues,
+    learningPath,
+    suggestions,
+  };
+}
+
+function buildFallbackModules(repoContext: GitHubRepoContext): RepoModule[] {
+  const candidatePaths = uniqueStrings(
+    [
+      ...repoContext.sourcePaths.filter(isHighSignalModulePath).slice(0, 5),
+      ...repoContext.docPaths.slice(0, 1),
+      ...repoContext.testPaths.slice(0, 1),
+      ...repoContext.notablePaths.slice(0, 8),
+    ],
+    6,
+  ).slice(0, 6);
+
+  return candidatePaths.map((path, index) => ({
+    id: sanitizeId(path, `module-${index + 1}`),
+    title: titleFromPath(path),
+    path,
+    summary: summarizePathRole(path, repoContext),
+    importance:
+      index === 0
+        ? "Core"
+        : isDocumentationOrTestPath(path, repoContext)
+          ? "Supporting"
+          : index < 4
+            ? "High"
+            : "Supporting",
+    language: inferLanguageFromPath(path),
+    framework: inferFrameworkFromPath(path, repoContext.stackHints),
+    coverage: repoContext.testPaths.length > 0 ? "Observed in repository tests" : "Review manually",
+    issueRefs: [],
+  }));
+}
+
+function buildFallbackIssues(
+  repoContext: GitHubRepoContext,
+  modules: RepoModule[],
+): RepoIssue[] {
+  if (repoContext.openIssues.length > 0) {
+    return repoContext.openIssues.slice(0, 4).map((issue, index) => {
+      const relatedModule =
+        findModuleForIssue(issue.title, issue.body, modules) ??
+        modules[index % Math.max(modules.length, 1)] ??
+        null;
+      const files = normalizePathList(
+        findReferencedPaths(
+          `${issue.title}\n${issue.body}`,
+          repoContext.notablePaths,
+          4,
+        ),
+        repoContext.treePaths,
+        relatedModule ? [relatedModule.path] : undefined,
+      );
+
+      return {
+        id: issue.id,
+        title: sanitizeText(issue.title, `Task ${index + 1}`),
+        summary: summarizeIssueBody(issue.body, relatedModule?.summary ?? "Repository contribution task."),
+        difficulty: inferDifficultyFromIssue(issue.labels, index),
+        module: relatedModule?.title ?? "Repository",
+        files,
+        labels: normalizeStringList(issue.labels, ["repository"], 3),
+        firstStep: `Read \`${files[0] ?? relatedModule?.path ?? "README.md"}\` and reproduce the current behavior before scoping the change.`,
+      };
+    });
+  }
+
+  return modules.slice(0, 4).map((module, index) => ({
+    id: `TASK-${index + 1}`,
+    title: `Understand ${module.title}`,
+    summary: `Trace how ${module.title} fits into ${repoContext.slug} and identify one safe improvement or documentation gap.`,
+    difficulty: index < 2 ? "Starter" : "Intermediate",
+    module: module.title,
+    files: [module.path],
+    labels: normalizeStringList(
+      [module.importance === "Core" ? "core module" : "starter task", inferLanguageFromPath(module.path).toLowerCase()],
+      ["starter task"],
+      3,
+    ),
+    firstStep: `Open \`${module.path}\` and compare it with the README, docs, and nearby tests before proposing a change.`,
+  }));
+}
+
+function buildFallbackLearningPath(
+  repoContext: GitHubRepoContext,
+  modules: RepoModule[],
+  issues: RepoIssue[],
+): LearningPathStep[] {
+  const topAreas = summarizeTopLevelAreas(repoContext.sourcePaths);
+  const coreModules = modules.filter((module) => module.importance !== "Supporting");
+  const firstIssue = issues[0];
+
+  return [
+    {
+      id: "project-overview",
+      title: `Read the ${repoContext.slug} overview`,
+      summary: `Start with the project framing, setup commands, and top-level areas${topAreas ? `: ${topAreas}.` : "."}`,
+      deliverables: normalizeStringList(
+        [
+          "Confirm the install and run commands.",
+          `List the main source areas${topAreas ? `: ${topAreas}` : ""}.`,
+        ],
+        ["Confirm the setup flow.", "List the main source areas."],
+        3,
+      ),
+      files: normalizePathList(
+        ["README.md", "package.json", repoContext.docPaths[0]].filter(Boolean) as string[],
+        repoContext.treePaths,
+      ),
+      duration: "10 min",
+    },
+    {
+      id: "core-flow",
+      title: "Trace the core execution flow",
+      summary: `Follow the most central implementation files before diving into side paths or tooling.`,
+      deliverables: normalizeStringList(
+        coreModules.slice(0, 2).map((module) => `Write down what ${module.title} is responsible for.`),
+        ["Note the responsibilities of the core modules."],
+        3,
+      ),
+      files: normalizePathList(
+        coreModules.slice(0, 2).map((module) => module.path),
+        repoContext.treePaths,
+      ),
+      duration: "15 min",
+    },
+    {
+      id: "integration-points",
+      title: "Map integration points",
+      summary: `Connect the main modules with adjacent files, documentation, and runtime boundaries.`,
+      deliverables: normalizeStringList(
+        [
+          "Note where data enters the codebase.",
+          "List the files that coordinate shared logic or UI boundaries.",
+        ],
+        ["List the main integration points."],
+        3,
+      ),
+      files: normalizePathList(
+        modules.slice(2, 5).map((module) => module.path),
+        repoContext.treePaths,
+        modules.slice(0, 2).map((module) => module.path),
+      ),
+      duration: "15 min",
+    },
+    {
+      id: "validation-surface",
+      title: "Review tests and supporting docs",
+      summary: `Use tests and docs to understand expected behavior, contributor workflow, and safety checks.`,
+      deliverables: normalizeStringList(
+        [
+          repoContext.testPaths.length > 0
+            ? `Inspect ${Math.min(repoContext.testPaths.length, 3)} high-signal test files.`
+            : "Identify missing explicit tests and note the risk.",
+          repoContext.docPaths.length > 0
+            ? "Check whether docs match the implementation."
+            : "Document any onboarding gaps you notice.",
+        ],
+        ["Review tests and docs."],
+        3,
+      ),
+      files: normalizePathList(
+        [...repoContext.testPaths.slice(0, 2), ...repoContext.docPaths.slice(0, 2)],
+        repoContext.treePaths,
+        ["README.md"],
+      ),
+      duration: "10 min",
+    },
+    {
+      id: "first-contribution",
+      title: "Pick a first contribution path",
+      summary: firstIssue
+        ? `Use ${firstIssue.id} as the first concrete task after you understand the architecture.`
+        : `Choose one small improvement in a core module and scope it conservatively.`,
+      deliverables: normalizeStringList(
+        [
+          firstIssue
+            ? `Write down the first step for ${firstIssue.id}.`
+            : "Write down a scoped first improvement.",
+          "List the files you would touch first.",
+        ],
+        ["Write down the first contribution plan."],
+        3,
+      ),
+      files: normalizePathList(
+        firstIssue?.files ?? modules.slice(0, 2).map((module) => module.path),
+        repoContext.treePaths,
+      ),
+      duration: "10 min",
+    },
+  ];
+}
+
+function buildFallbackWorkflow(repoContext: GitHubRepoContext) {
+  const topAreas = summarizeTopLevelAreas(repoContext.sourcePaths);
+  const firstNonReadmeDoc = repoContext.docPaths.find((path) => path.toLowerCase() !== "readme.md");
+  const primaryDocs = firstNonReadmeDoc ? `README and ${firstNonReadmeDoc}` : "README and package.json";
+  const stackSummary = repoContext.stackHints.length > 0 ? repoContext.stackHints.slice(0, 4).join(", ") : "the primary runtime and dependency files";
+
+  return [
+    `Read ${primaryDocs} to understand the project goal, setup flow, and maintainer expectations.`,
+    `Scan the main implementation areas${topAreas ? `: ${topAreas}` : ""} before drilling into individual files.`,
+    `Trace the core source files and how ${stackSummary} shape the runtime boundaries.`,
+    `Use ${repoContext.testPaths.length > 0 ? "tests and docs" : "docs and repository structure"} to confirm expected behavior before editing code.`,
+    `Choose a scoped issue or starter task and anchor the change to concrete files and validation steps.`,
+  ];
+}
+
+function buildFallbackConventions(repoContext: GitHubRepoContext) {
+  const primaryLanguage = inferPrimaryLanguage(repoContext);
+  const primaryFramework =
+    repoContext.stackHints.find((hint) => hint !== primaryLanguage) ??
+    repoContext.stackHints[0] ??
+    "the repository toolchain";
+  const conventions = [
+    `Keep changes grounded in concrete file paths, issue IDs, and module boundaries instead of generic summaries.`,
+    `Follow the ${primaryLanguage} and ${primaryFramework} patterns already visible in the repository before introducing new structure.`,
+    repoContext.testPaths.length > 0
+      ? "Read nearby tests before changing behavior, then update or add validation with the code change."
+      : "Validate behavioral assumptions against README, docs, and existing source flows because explicit tests are limited.",
+    repoContext.docPaths.length > 0
+      ? "Keep contributor-facing docs in sync when setup, architecture, or workflow changes."
+      : "Document onboarding or workflow gaps you discover while reading the codebase.",
+    "Prefer small, reviewable contribution slices that stay close to the module you are modifying.",
+  ];
+
+  return normalizeStringList(conventions, conventions, 5);
+}
+
+function buildFallbackSuggestions(
+  repoContext: GitHubRepoContext,
+  modules: RepoModule[],
+) {
+  const firstModule = modules[0]?.title ?? "the core module";
+  const firstIssue = repoContext.openIssues[0]?.id ?? "the safest starter task";
+
+  return [
+    `Explain the architecture of ${repoContext.slug}.`,
+    `Which file should I read first to understand ${firstModule}?`,
+    `What is the safest first contribution in ${repoContext.slug}?`,
+    `How do tests, docs, and ${firstIssue} shape this repository?`,
+  ];
+}
+
 function normalizeModules(
   modules: RepoModule[] | undefined,
   repoContext: GitHubRepoContext,
@@ -494,29 +746,47 @@ function normalizeModules(
     }));
   }
 
-  return modules.slice(0, 6).map((module, index) => ({
-    id: sanitizeId(module.id, `module-${index + 1}`),
-    title: sanitizeText(module.title, fallbackModules[index]?.title ?? `Module ${index + 1}`),
-    path: resolveExistingPath(
+  const normalizedModules = modules.slice(0, 6).map((module, index) => {
+    const resolvedPath = resolveExistingPath(
       module.path,
       repoContext.treePaths,
       fallbackModules[index]?.path,
-    ),
-    summary: sanitizeText(
-      module.summary,
-      fallbackModules[index]?.summary ?? "Important repository module.",
-    ),
-    importance: normalizeImportance(module.importance),
-    language: sanitizeText(module.language, inferLanguageFromPath(module.path)),
-    framework: sanitizeText(
-      module.framework,
-      inferFrameworkFromPath(module.path, repoContext.stackHints),
-    ),
-    coverage: sanitizeText(module.coverage, "Observed"),
-    issueRefs: (module.issueRefs ?? [])
-      .filter((issueId) => issues.some((issue) => issue.id === issueId))
-      .slice(0, 3),
-  }));
+    );
+
+    return {
+      id: sanitizeId(module.id, `module-${index + 1}`),
+      title: sanitizeText(module.title, fallbackModules[index]?.title ?? titleFromPath(resolvedPath)),
+      path: resolvedPath,
+      summary: sanitizeText(
+        module.summary,
+        fallbackModules[index]?.summary ?? summarizePathRole(resolvedPath, repoContext),
+      ),
+      importance: normalizeImportance(module.importance),
+      language: sanitizeText(module.language, inferLanguageFromPath(resolvedPath)),
+      framework: sanitizeText(
+        module.framework,
+        inferFrameworkFromPath(resolvedPath, repoContext.stackHints),
+      ),
+      coverage: sanitizeText(module.coverage, "Observed"),
+      issueRefs: normalizeStringList(
+        (module.issueRefs ?? []).filter((issueId) =>
+          issues.some((issue) => issue.id === issueId),
+        ),
+        fallbackIssueIds.slice(0, 2),
+        3,
+      ),
+    } satisfies RepoModule;
+  });
+
+  return mergeUniqueByKey(
+    normalizedModules,
+    fallbackModules.map((module, index) => ({
+      ...module,
+      issueRefs: module.issueRefs.length > 0 ? module.issueRefs : fallbackIssueIds.slice(index, index + 2),
+    })),
+    (module) => module.path,
+    6,
+  );
 }
 
 function normalizeIssues(
@@ -528,13 +798,11 @@ function normalizeIssues(
     return fallbackIssues.map((issue, index) => ({
       ...issue,
       id: `TASK-${index + 1}`,
-      files: issue.files.map((file) =>
-        resolveExistingPath(file, repoContext.treePaths),
-      ),
+      files: normalizePathList(issue.files, repoContext.treePaths),
     }));
   }
 
-  return issues.slice(0, 4).map((issue, index) => ({
+  const normalizedIssues = issues.slice(0, 4).map((issue, index) => ({
     id: sanitizeText(issue.id, `TASK-${index + 1}`),
     title: sanitizeText(issue.title, fallbackIssues[index]?.title ?? `Task ${index + 1}`),
     summary: sanitizeText(
@@ -543,21 +811,24 @@ function normalizeIssues(
     ),
     difficulty: normalizeDifficulty(issue.difficulty),
     module: sanitizeText(issue.module, fallbackIssues[index]?.module ?? "Repository"),
-    files: (issue.files ?? [])
-      .slice(0, 4)
-      .map((filePath) =>
-        resolveExistingPath(
-          filePath,
-          repoContext.treePaths,
-          fallbackIssues[index]?.files[0],
-        ),
-      ),
+    files: normalizePathList(
+      issue.files ?? [],
+      repoContext.treePaths,
+      fallbackIssues[index]?.files,
+    ),
     labels: normalizeStringList(issue.labels, fallbackIssues[index]?.labels ?? [], 3),
     firstStep: sanitizeText(
       issue.firstStep,
       fallbackIssues[index]?.firstStep ?? "Read the files involved and reproduce the current behavior.",
     ),
   }));
+
+  return mergeUniqueByKey(
+    normalizedIssues,
+    fallbackIssues,
+    (issue) => issue.id,
+    4,
+  );
 }
 
 function normalizeLearningPath(
@@ -569,7 +840,7 @@ function normalizeLearningPath(
     return fallbackLearningPath;
   }
 
-  return learningPath.slice(0, 5).map((step, index) => ({
+  const normalizedLearningPath = learningPath.slice(0, 5).map((step, index) => ({
     id: sanitizeId(step.id, `step-${index + 1}`),
     title: sanitizeText(step.title, fallbackLearningPath[index]?.title ?? `Step ${index + 1}`),
     summary: sanitizeText(
@@ -581,17 +852,20 @@ function normalizeLearningPath(
       fallbackLearningPath[index]?.deliverables ?? ["Notes", "Questions"],
       3,
     ),
-    files: (step.files ?? [])
-      .slice(0, 4)
-      .map((filePath) =>
-        resolveExistingPath(
-          filePath,
-          repoContext.treePaths,
-          fallbackLearningPath[index]?.files[0],
-        ),
-      ),
+    files: normalizePathList(
+      step.files ?? [],
+      repoContext.treePaths,
+      fallbackLearningPath[index]?.files,
+    ),
     duration: sanitizeText(step.duration, fallbackLearningPath[index]?.duration ?? "10 min"),
   }));
+
+  return mergeUniqueByKey(
+    normalizedLearningPath,
+    fallbackLearningPath,
+    (step) => step.id,
+    5,
+  );
 }
 
 function normalizeMetrics(
@@ -807,7 +1081,12 @@ function resolveExistingPath(
     return resolveExistingPath(fallbackCandidate, treePaths);
   }
 
-  return treePaths[0] ?? "README.md";
+  return (
+    treePaths.find((path) => path.toLowerCase() === "readme.md") ??
+    treePaths.find((path) => path.toLowerCase() === "package.json") ??
+    treePaths[0] ??
+    "README.md"
+  );
 }
 
 function inferLanguageFromPath(path: string | undefined) {
@@ -853,6 +1132,219 @@ function inferFrameworkFromPath(
   return stackHints[0] ?? "Repository";
 }
 
+function isDocumentationOrTestPath(
+  path: string,
+  repoContext: GitHubRepoContext,
+) {
+  return repoContext.docPaths.includes(path) || repoContext.testPaths.includes(path);
+}
+
+function isHighSignalModulePath(path: string) {
+  const normalizedPath = path.toLowerCase();
+
+  return (
+    normalizedPath === "package.json" ||
+    normalizedPath === "readme.md" ||
+    normalizedPath.startsWith("src/") ||
+    normalizedPath.startsWith("app/") ||
+    normalizedPath.startsWith("lib/") ||
+    normalizedPath.startsWith("components/") ||
+    normalizedPath.startsWith("server/") ||
+    normalizedPath.startsWith("pages/")
+  );
+}
+
+function titleFromPath(path: string) {
+  const segments = path.split("/").filter(Boolean);
+  const rawLeaf = segments[segments.length - 1]?.replace(/\.[^.]+$/, "") ?? path;
+  const parent = segments[segments.length - 2];
+  const baseLabel =
+    rawLeaf === "index" || rawLeaf === "page" || rawLeaf === "route" || rawLeaf === "layout"
+      ? `${parent ?? "root"} ${rawLeaf}`
+      : rawLeaf;
+
+  return baseLabel
+    .replace(/[\[\]()]/g, " ")
+    .split(/[-_.\s/]+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(" ");
+}
+
+function summarizePathRole(
+  path: string,
+  repoContext: GitHubRepoContext,
+) {
+  const normalizedPath = path.toLowerCase();
+
+  if (normalizedPath === "readme.md") {
+    return `Primary project overview and setup entrypoint for ${repoContext.slug}.`;
+  }
+
+  if (normalizedPath === "package.json") {
+    return "Dependency manifest and script surface that defines install, build, and test commands.";
+  }
+
+  if (repoContext.docPaths.includes(path)) {
+    return "Documentation surface that explains architecture, setup, or contributor workflow.";
+  }
+
+  if (repoContext.testPaths.includes(path)) {
+    return "Validation file that shows expected behavior and change safety checks.";
+  }
+
+  if (normalizedPath.startsWith("app/") || normalizedPath.includes("/api/")) {
+    return "Application or route boundary that wires requests, rendering, or server behavior together.";
+  }
+
+  if (normalizedPath.startsWith("components/")) {
+    return "UI or presentation component that exposes part of the product surface.";
+  }
+
+  if (normalizedPath.startsWith("lib/") || normalizedPath.startsWith("src/")) {
+    return "Core implementation file that holds reusable logic or domain behavior.";
+  }
+
+  return `High-signal repository file selected from ${repoContext.slug} for contributor onboarding.`;
+}
+
+function summarizeIssueBody(
+  body: string,
+  fallback: string,
+) {
+  const normalizedBody = body
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean);
+
+  if (!normalizedBody) {
+    return fallback;
+  }
+
+  return normalizedBody.length > 180
+    ? `${normalizedBody.slice(0, 177)}...`
+    : normalizedBody;
+}
+
+function summarizeTopLevelAreas(paths: string[]) {
+  const areas = uniqueStrings(
+    paths
+      .filter((path) => path.includes("/"))
+      .map((path) => path.split("/")[0])
+      .filter((area) => area && !area.includes(".")),
+    4,
+  );
+
+  return areas.join(", ");
+}
+
+function inferPrimaryLanguage(repoContext: GitHubRepoContext) {
+  const stackLanguage = repoContext.stackHints.find((hint) =>
+    ["TypeScript", "JavaScript", "Python", "Go", "Rust", "Ruby"].includes(hint),
+  );
+
+  if (stackLanguage) {
+    return stackLanguage;
+  }
+
+  return (
+    repoContext.sourcePaths
+      .map((path) => inferLanguageFromPath(path))
+      .find((language) => language !== "Unknown") ??
+    "Repository"
+  );
+}
+
+function findReferencedPaths(
+  text: string,
+  candidatePaths: string[],
+  maxItems: number,
+) {
+  const normalizedText = text.toLowerCase();
+  const directMatches = candidatePaths.filter((path) =>
+    normalizedText.includes(path.toLowerCase()),
+  );
+
+  if (directMatches.length > 0) {
+    return directMatches.slice(0, maxItems);
+  }
+
+  const basenameMatches = candidatePaths.filter((path) => {
+    const basename = path.split("/").pop()?.toLowerCase();
+
+    return basename ? normalizedText.includes(basename) : false;
+  });
+
+  return basenameMatches.slice(0, maxItems);
+}
+
+function findModuleForIssue(
+  title: string,
+  body: string,
+  modules: RepoModule[],
+) {
+  const haystack = `${title}\n${body}`.toLowerCase();
+
+  return (
+    modules.find((module) => haystack.includes(module.path.toLowerCase())) ??
+    modules.find((module) => haystack.includes(module.title.toLowerCase()))
+  );
+}
+
+function inferDifficultyFromIssue(
+  labels: string[],
+  index: number,
+): DifficultyLevel {
+  const normalizedLabels = labels.map((label) => label.toLowerCase());
+
+  if (
+    normalizedLabels.some((label) =>
+      ["good first issue", "starter", "beginner", "easy"].includes(label),
+    )
+  ) {
+    return "Starter";
+  }
+
+  if (
+    normalizedLabels.some((label) =>
+      ["help wanted", "intermediate", "medium"].includes(label),
+    )
+  ) {
+    return "Intermediate";
+  }
+
+  return index === 0 ? "Starter" : index < 3 ? "Intermediate" : "Stretch";
+}
+
+function normalizePathList(
+  values: string[] | undefined,
+  treePaths: string[],
+  fallbackValues?: string[],
+) {
+  const normalizedValues = mergeUniqueByKey(
+    (values ?? []).map((value) =>
+      resolveExistingPath(value, treePaths),
+    ),
+    (fallbackValues ?? []).map((value) =>
+      resolveExistingPath(value, treePaths),
+    ),
+    (value) => value,
+    4,
+  );
+
+  if (normalizedValues.length > 0) {
+    return normalizedValues;
+  }
+
+  return [
+    resolveExistingPath(
+      "README.md",
+      treePaths,
+      fallbackValues?.[0],
+    ),
+  ];
+}
+
 function normalizeImportance(value: string | undefined): ImportanceLevel {
   if (value === "Core" || value === "High" || value === "Supporting") {
     return value;
@@ -890,16 +1382,18 @@ function normalizeStringList(
   fallbackValues: string[],
   maxItems: number,
 ) {
-  const normalizedValues = (values ?? [])
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .slice(0, maxItems);
+  const normalizedValues = uniqueStrings(
+    (values ?? [])
+      .map((value) => value.trim())
+      .filter(Boolean),
+    maxItems,
+  );
 
   if (normalizedValues.length > 0) {
     return normalizedValues;
   }
 
-  return fallbackValues.slice(0, maxItems);
+  return uniqueStrings(fallbackValues, maxItems);
 }
 
 function formatCommitWindow(repoContext: GitHubRepoContext) {
@@ -921,7 +1415,24 @@ function safeJsonParse<T>(value: string): T | null {
   try {
     return JSON.parse(value) as T;
   } catch {
-    return null;
+    const normalizedValue = value.trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+
+    try {
+      return JSON.parse(normalizedValue) as T;
+    } catch {
+      const start = normalizedValue.indexOf("{");
+      const end = normalizedValue.lastIndexOf("}");
+
+      if (start >= 0 && end > start) {
+        try {
+          return JSON.parse(normalizedValue.slice(start, end + 1)) as T;
+        } catch {
+          return null;
+        }
+      }
+
+      return null;
+    }
   }
 }
 
@@ -936,4 +1447,38 @@ function dedupeById<T extends { id: string }>(values: T[]) {
     seenIds.add(value.id);
     return true;
   });
+}
+
+function mergeUniqueByKey<T>(
+  primaryValues: T[],
+  fallbackValues: T[],
+  getKey: (value: T) => string,
+  maxItems: number,
+) {
+  const mergedValues = [...primaryValues, ...fallbackValues];
+  const seenKeys = new Set<string>();
+  const uniqueValues: T[] = [];
+
+  for (const value of mergedValues) {
+    const key = getKey(value);
+
+    if (!key || seenKeys.has(key)) {
+      continue;
+    }
+
+    seenKeys.add(key);
+    uniqueValues.push(value);
+
+    if (uniqueValues.length >= maxItems) {
+      break;
+    }
+  }
+
+  return uniqueValues;
+}
+
+function uniqueStrings(values: string[], maxItems: number) {
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean)),
+  ).slice(0, maxItems);
 }
