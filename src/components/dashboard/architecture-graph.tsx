@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -106,14 +106,10 @@ export function ArchitectureGraph({
   const [flowNodes, , onNodesChange] = useNodesState<RepoFlowNode>(initialNodes);
   const [flowEdges, , onEdgesChange] = useEdgesState<RepoFlowEdge>(initialEdges);
 
-  const selectedNode =
-    flowNodes.find((node) => node.id === selectedNodeId)?.data ?? flowNodes[0]?.data;
-
-  useEffect(() => {
-    if (selectedNode) {
-      onSelectNode?.(selectedNode);
-    }
-  }, [onSelectNode, selectedNode]);
+  const handleNodeSelect = (node: RepoFlowNode) => {
+    setSelectedNodeId(node.id);
+    onSelectNode?.(node.data);
+  };
 
   return (
     <Card className="min-w-0 overflow-hidden">
@@ -145,7 +141,7 @@ export function ArchitectureGraph({
                     stroke: "var(--color-border)",
                   },
                 }}
-                onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+                onNodeClick={(_, node) => handleNodeSelect(node as RepoFlowNode)}
               >
                 <Background
                   id="repo-grid"
