@@ -34,6 +34,8 @@ type RepoSidebarProps = {
 };
 
 export function RepoSidebar({ analysis }: RepoSidebarProps) {
+  const signalItems = createSignalItems(analysis);
+
   return (
     <Sidebar variant="inset">
       <SidebarHeader className="gap-3 border-b">
@@ -67,34 +69,15 @@ export function RepoSidebar({ analysis }: RepoSidebarProps) {
           <SidebarGroupLabel>Signals analyzed</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="README and product framing">
-                  <BookOpenIcon />
-                  <span>README</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>1</SidebarMenuBadge>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="High-signal folders and files">
-                  <FolderTreeIcon />
-                  <span>Directory tree</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>24</SidebarMenuBadge>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Repository tests and coverage hints">
-                  <TestTubeDiagonalIcon />
-                  <span>Tests</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>118</SidebarMenuBadge>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="ADRs, docs, and contributor notes">
-                  <LibraryBigIcon />
-                  <span>Docs and issues</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>45</SidebarMenuBadge>
-              </SidebarMenuItem>
+              {signalItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton tooltip={item.tooltip}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                  <SidebarMenuBadge>{item.value}</SidebarMenuBadge>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -155,4 +138,74 @@ export function RepoSidebar({ analysis }: RepoSidebarProps) {
       <SidebarRail />
     </Sidebar>
   );
+}
+
+function createSignalItems(analysis: RepoAnalysis) {
+  const directorySource = analysis.analysisSources.find(
+    (source) => source.label === "Directory Tree",
+  );
+  const testsSource = analysis.analysisSources.find(
+    (source) => source.label === "Tests",
+  );
+  const docsSource = analysis.analysisSources.find(
+    (source) => source.label === "Docs",
+  );
+  const dependenciesSource = analysis.analysisSources.find(
+    (source) => source.label === "Dependencies",
+  );
+
+  return [
+    {
+      label: "README",
+      icon: BookOpenIcon,
+      value: "1",
+      tooltip:
+        analysis.analysisSources.find((source) => source.label === "README")
+          ?.detail ?? "Project overview and setup framing from README.",
+    },
+    {
+      label: "Directory tree",
+      icon: FolderTreeIcon,
+      value:
+        extractNumericSignal(directorySource?.detail) ??
+        String(Math.max(analysis.modules.length, 1)),
+      tooltip:
+        directorySource?.detail ??
+        "High-signal directories and files selected from the repository tree.",
+    },
+    {
+      label: "Dependencies",
+      icon: LibraryBigIcon,
+      value: String(Math.max(analysis.stack.length, 1)),
+      tooltip:
+        dependenciesSource?.detail ??
+        `Primary stack signals: ${analysis.stack.join(", ")}`,
+    },
+    {
+      label: "Tests",
+      icon: TestTubeDiagonalIcon,
+      value:
+        extractNumericSignal(testsSource?.detail) ??
+        analysis.metrics.find((metric) => metric.label === "Test Coverage")
+          ?.value ??
+        String(analysis.issues.length),
+      tooltip:
+        testsSource?.detail ??
+        "Repository tests and validation signals used during analysis.",
+    },
+    {
+      label: "Docs and issues",
+      icon: LibraryBigIcon,
+      value: `${extractNumericSignal(docsSource?.detail) ?? "0"} + ${analysis.issues.length}`,
+      tooltip:
+        docsSource?.detail ??
+        "Documentation and issue context grounded the contributor guidance.",
+    },
+  ];
+}
+
+function extractNumericSignal(value?: string) {
+  const match = value?.match(/\d+/);
+
+  return match?.[0] ?? null;
 }

@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useMemo } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -7,8 +8,10 @@ import {
   MiniMap,
   Position,
   ReactFlow,
+  useReactFlow,
   useEdgesState,
   useNodesState,
+  useNodesInitialized,
   type Edge,
   type Node,
   type NodeProps,
@@ -78,6 +81,39 @@ const nodeTypes = {
   module: ModuleNode,
 };
 
+function FitViewController({ dependencyKey }: { dependencyKey: string }) {
+  const { fitView } = useReactFlow<RepoFlowNode, RepoFlowEdge>();
+  const nodesInitialized = useNodesInitialized();
+
+  useEffect(() => {
+    if (!nodesInitialized) {
+      return;
+    }
+
+    const runFitView = () => {
+      void fitView({
+        padding: 0.18,
+        duration: 250,
+        maxZoom: 1,
+      });
+    };
+
+    const frameId = window.requestAnimationFrame(runFitView);
+    const timeoutId = window.setTimeout(runFitView, 180);
+    const handleResize = () => runFitView();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [dependencyKey, fitView, nodesInitialized]);
+
+  return null;
+}
+
 export function ArchitectureGraph({
   title,
   description,
@@ -104,6 +140,18 @@ export function ArchitectureGraph({
     useNodesState<RepoFlowNode>(initialNodes);
   const [flowEdges, , onEdgesChange] =
     useEdgesState<RepoFlowEdge>(initialEdges);
+  const canvasWidth = useMemo(() => {
+    const rightEdge = Math.max(
+      ...nodes.map((node) => node.position.x + 320),
+      960,
+    );
+
+    return rightEdge + 120;
+  }, [nodes]);
+  const fitDependencyKey = useMemo(
+    () => flowNodes.map((node) => `${node.id}:${node.position.x}:${node.position.y}`).join("|"),
+    [flowNodes],
+  );
 
   const handleNodeSelect = (node: RepoFlowNode) => {
     onSelectNode?.(node.data);
@@ -124,8 +172,11 @@ export function ArchitectureGraph({
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <div className="min-w-[880px]">
-            <div className="h-[560px] w-full">
+          <div
+            className="min-w-[960px]"
+            style={{ width: `${canvasWidth}px` }}
+          >
+            <div className="h-[560px] w-full min-w-[960px]">
               <ReactFlow
                 nodes={flowNodes}
                 edges={flowEdges}
@@ -133,7 +184,13 @@ export function ArchitectureGraph({
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 fitView
+                fitViewOptions={{
+                  padding: 0.18,
+                  maxZoom: 1,
+                }}
                 proOptions={{ hideAttribution: true }}
+                minZoom={0.2}
+                maxZoom={1.25}
                 defaultEdgeOptions={{
                   style: {
                     stroke: "var(--color-border)",
@@ -143,6 +200,7 @@ export function ArchitectureGraph({
                   handleNodeSelect(node as RepoFlowNode)
                 }
               >
+                <FitViewController dependencyKey={fitDependencyKey} />
                 <Background
                   id="repo-grid"
                   gap={20}
